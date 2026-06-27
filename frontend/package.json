@@ -1,0 +1,15 @@
+﻿{
+  "name": "textile-pos-frontend",
+  "version": "1.0.0",
+  "description": "Textile POS Frontend",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve -p 3000",
+    "dev": "serve -p 3000"
+  },
+  "devDependencies": {
+    "serve": "^14.0.0"
+  },
+  "author": "Aamir Saba",
+  "license": "MIT"
+}
