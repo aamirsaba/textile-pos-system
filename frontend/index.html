@@ -1,0 +1,971 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Textile POS System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        .status {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #166534;
+        }
+        .status.error {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #dc2626;
+        }
+        
+        /* Dashboard Stats */
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-box.green { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); }
+        .stat-box.orange { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); }
+        .stat-box.red { background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%); }
+        .stat-box .stat-number { font-size: 2rem; font-weight: bold; }
+        .stat-box .stat-label { font-size: 0.9rem; opacity: 0.9; }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #666;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .tab-btn:hover { background: #f1f5f9; }
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .product-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        .product-name { font-weight: bold; font-size: 1.1rem; color: #333; }
+        .product-category { color: #666; font-size: 0.9rem; margin: 5px 0; }
+        .product-price { color: #667eea; font-weight: bold; font-size: 1.3rem; }
+        .product-roll { color: #999; font-size: 0.8rem; }
+        
+        .cart-section {
+            margin-top: 30px;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 20px;
+        }
+        .cart-items { min-height: 100px; max-height: 300px; overflow-y: auto; }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .cart-item-details {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .cart-item-unit { font-size: 0.8rem; color: #999; }
+        .cart-total {
+            font-size: 1.3rem;
+            font-weight: bold;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .btn-checkout {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-checkout:hover { background: #5a67d8; transform: scale(1.02); }
+        .btn-checkout:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-checkout.loading {
+            background: #cbd5e1;
+            cursor: wait;
+        }
+        .btn-clear {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .btn-clear:hover { background: #dc2626; }
+        .btn-remove {
+            background: #f87171;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-remove:hover { background: #ef4444; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .empty-cart { text-align: center; padding: 40px; color: #999; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        /* Sales Table */
+        .sales-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .sales-table th {
+            background: #f1f5f9;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            color: #333;
+        }
+        .sales-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .sales-table tr:hover { background: #f8fafc; }
+        .sales-table .invoice-link {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .customer-section {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .customer-section label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .customer-section select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+        }
+        .customer-balance {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .customer-balance .label { color: #666; }
+        .customer-balance .amount { font-weight: bold; color: #333; }
+        .customer-balance .amount.negative { color: #dc2626; }
+        .customer-balance .amount.positive { color: #16a34a; }
+        
+        .payment-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .payment-option {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+        .payment-option:hover { border-color: #667eea; }
+        .payment-option.selected {
+            border-color: #667eea;
+            background: #eef2ff;
+        }
+        .payment-option input[type="radio"] { display: none; }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal h2 { color: #333; margin-bottom: 5px; }
+        .modal .modal-price {
+            color: #667eea;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .modal .modal-subtitle { color: #666; margin: 10px 0 20px 0; }
+        .modal-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .modal-options button {
+            padding: 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        .modal-options .btn-roll {
+            background: #667eea;
+            color: white;
+        }
+        .modal-options .btn-roll:hover { background: #5a67d8; transform: scale(1.05); }
+        .modal-options .btn-meter {
+            background: #48bb78;
+            color: white;
+        }
+        .modal-options .btn-meter:hover { background: #38a169; transform: scale(1.05); }
+        .modal .btn-cancel {
+            margin-top: 15px;
+            padding: 12px;
+            width: 100%;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .modal .btn-cancel:hover { background: #cbd5e1; }
+        .modal small { display: block; color: #999; font-size: 0.8rem; margin-top: 3px; }
+        
+        #credit-info {
+            display: none;
+            padding: 10px;
+            background: #fef3c7;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #16a34a;
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: none;
+            max-width: 400px;
+        }
+        .toast.show { display: block; animation: slideIn 0.5s ease; }
+        .toast.error { background: #dc2626; }
+        .toast .toast-title { font-weight: bold; font-size: 1.1rem; }
+        .toast .toast-sub { font-size: 0.9rem; opacity: 0.9; margin-top: 5px; }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .payment-section { grid-template-columns: 1fr; }
+            .modal-options { grid-template-columns: 1fr; }
+            .dashboard-stats { grid-template-columns: 1fr 1fr; }
+            .sales-table { font-size: 0.8rem; }
+            .sales-table th, .sales-table td { padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🏪 Textile POS System</h1>
+                <p class="subtitle">Touch-friendly Point of Sale for Textile Business</p>
+            </div>
+            <span class="badge">v1.0</span>
+        </div>
+        
+        <div class="status" id="status">⏳ Loading...</div>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('pos')">🛒 POS</button>
+            <button class="tab-btn" onclick="switchTab('dashboard')">📊 Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('sales')">📋 Sales History</button>
+        </div>
+        
+        <!-- Tab: POS -->
+        <div class="tab-content active" id="tab-pos">
+            <div class="stats" id="stats"></div>
+            
+            <div class="customer-section">
+                <label>👤 Customer</label>
+                <select id="customer-select" onchange="updateCustomerInfo()">
+                    <option value="walk-in">🚶 Walk-in Customer</option>
+                    <option value="1">👤 John Doe (₦5,000.00 balance)</option>
+                    <option value="2">👤 Jane Smith (₦0.00 balance)</option>
+                    <option value="3">👤 Bob Johnson (₦12,500.00 balance)</option>
+                </select>
+                <div class="customer-balance" id="customer-balance">
+                    <span class="label">Balance:</span>
+                    <span class="amount positive">₦0.00</span>
+                </div>
+            </div>
+            
+            <h2>📦 Products</h2>
+            <div class="product-grid" id="products">
+                <div class="loading">Loading products...</div>
+            </div>
+            
+            <div class="cart-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <h2>🛒 Cart</h2>
+                    <button class="btn-clear" onclick="clearCart()">Clear Cart</button>
+                </div>
+                <div class="cart-items" id="cart-items">
+                    <div class="empty-cart">No items in cart. Click a product to add.</div>
+                </div>
+                
+                <div class="payment-section">
+                    <label class="payment-option selected" onclick="selectPayment('cash')">
+                        <input type="radio" name="payment" value="cash" checked> 💵 Cash
+                    </label>
+                    <label class="payment-option" onclick="selectPayment('credit')">
+                        <input type="radio" name="payment" value="credit"> 💳 Credit
+                    </label>
+                </div>
+                
+                <div class="cart-total" id="cart-total">Total: ₦0.00</div>
+                
+                <div id="credit-info">
+                    <div><strong>⚠️ Credit Sale</strong></div>
+                    <div id="credit-details"></div>
+                </div>
+                
+                <button class="btn-checkout" id="checkout-btn" onclick="checkout()">Checkout (₦0.00)</button>
+            </div>
+        </div>
+        
+        <!-- Tab: Dashboard -->
+        <div class="tab-content" id="tab-dashboard">
+            <h2>📊 Sales Dashboard</h2>
+            <div class="dashboard-stats" id="dashboard-stats">
+                <div class="stat-box"><div class="stat-number" id="today-sales">-</div><div class="stat-label">Today's Sales</div></div>
+                <div class="stat-box green"><div class="stat-number" id="today-transactions">-</div><div class="stat-label">Today's Transactions</div></div>
+                <div class="stat-box orange"><div class="stat-number" id="total-sales">-</div><div class="stat-label">Total Sales</div></div>
+                <div class="stat-box red"><div class="stat-number" id="total-transactions">-</div><div class="stat-label">Total Transactions</div></div>
+            </div>
+            
+            <h3>📋 Today's Sales</h3>
+            <div id="today-sales-list"><div class="loading">Loading today's sales...</div></div>
+            
+            <h3 style="margin-top:20px;">📋 Recent Sales</h3>
+            <div id="recent-sales-list"><div class="loading">Loading recent sales...</div></div>
+        </div>
+        
+        <!-- Tab: Sales History -->
+        <div class="tab-content" id="tab-sales">
+            <h2>📋 All Sales History</h2>
+            <div style="margin:15px 0;">
+                <button onclick="loadAllSales()" style="padding:10px 20px; background:#667eea; color:white; border:none; border-radius:8px; cursor:pointer;">🔄 Refresh</button>
+            </div>
+            <div id="all-sales-list"><div class="loading">Loading sales history...</div></div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-title" id="toast-title">✅ Success!</div>
+        <div class="toast-sub" id="toast-sub">Sale recorded successfully</div>
+    </div>
+    
+    <!-- Product Selection Modal -->
+    <div class="modal-overlay" id="product-modal">
+        <div class="modal">
+            <h2 id="modal-product-name">Product Name</h2>
+            <div class="modal-price" id="modal-product-price">₦0.00 / meter</div>
+            <p class="modal-subtitle">How do you want to sell this product?</p>
+            <div class="modal-options">
+                <button class="btn-roll" onclick="sellRoll()">
+                    📦 Roll<br>
+                    <small>22.86m (Standard)</small>
+                </button>
+                <button class="btn-meter" onclick="sellMeter()">
+                    📏 Meter<br>
+                    <small>Custom length</small>
+                </button>
+            </div>
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+    
+    <script>
+        let products = [];
+        let cart = [];
+        let selectedProduct = null;
+        let selectedPayment = 'cash';
+        
+        const customers = {
+            'walk-in': { name: 'Walk-in Customer', balance: 0 },
+            '1': { name: 'John Doe', balance: 5000 },
+            '2': { name: 'Jane Smith', balance: 0 },
+            '3': { name: 'Bob Johnson', balance: 12500 }
+        };
+        
+        // ==================== TABS ====================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+            
+            if (tab === 'dashboard') loadDashboard();
+            if (tab === 'sales') loadAllSales();
+        }
+        
+        // ==================== PRODUCTS ====================
+        async function loadProducts() {
+            try {
+                const response = await fetch('http://localhost:5000/api/v1/products');
+                const data = await response.json();
+                
+                if (data.success) {
+                    products = data.data;
+                    const statusEl = document.getElementById('status');
+                    statusEl.innerHTML = '✅ Connected to backend! Loaded ' + data.count + ' products';
+                    statusEl.className = 'status';
+                    
+                    renderStats(data.count);
+                    renderProducts(products);
+                }
+            } catch (error) {
+                const statusEl = document.getElementById('status');
+                statusEl.innerHTML = '❌ Failed to connect to backend. Make sure the server is running on port 5000.';
+                statusEl.className = 'status error';
+                document.getElementById('products').innerHTML = 
+                    '<div style="text-align:center;padding:40px;color:#dc2626;">Error loading products</div>';
+            }
+        }
+        
+        function renderStats(count) {
+            const statsHtml = `
+                <div class="stat-card" style="display:inline-block;background:#f1f5f9;padding:15px;border-radius:10px;margin-right:15px;">
+                    <span style="font-size:1.5rem;font-weight:bold;color:#333;">${count}</span>
+                    <span style="color:#666;font-size:0.9rem;"> Products</span>
+                </div>
+                <div class="stat-card" style="display:inline-block;background:#f1f5f9;padding:15px;border-radius:10px;">
+                    <span style="font-size:1.5rem;font-weight:bold;color:#333;">${new Date().toLocaleTimeString()}</span>
+                    <span style="color:#666;font-size:0.9rem;"> Updated</span>
+                </div>
+            `;
+            document.getElementById('stats').innerHTML = statsHtml;
+        }
+        
+        function renderProducts(products) {
+            const productsHtml = products.map(product => `
+                <div class="product-card" onclick="openModal('${product.id}')">
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-category">${product.category || 'General'}</div>
+                    <div class="product-price">₦${parseFloat(product.sellingPrice).toLocaleString()}</div>
+                    <div class="product-roll">${product.standardRollLength}m</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('products').innerHTML = productsHtml;
+        }
+        
+        // ==================== CUSTOMER ====================
+        function updateCustomerInfo() {
+            const select = document.getElementById('customer-select');
+            const customerId = select.value;
+            const customer = customers[customerId];
+            
+            const balanceEl = document.getElementById('customer-balance');
+            if (customer) {
+                const amount = customer.balance;
+                const className = amount > 0 ? 'amount negative' : (amount < 0 ? 'amount positive' : 'amount');
+                balanceEl.innerHTML = `
+                    <span class="label">Balance:</span>
+                    <span class="${className}">₦${Math.abs(amount).toLocaleString()}</span>
+                    ${amount > 0 ? ' (outstanding)' : ''}
+                    ${amount < 0 ? ' (credit)' : ''}
+                `;
+            }
+        }
+        
+        // ==================== PAYMENT ====================
+        function selectPayment(method) {
+            selectedPayment = method;
+            document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+            document.querySelector(`.payment-option input[value="${method}"]`).closest('.payment-option').classList.add('selected');
+            
+            const creditInfo = document.getElementById('credit-info');
+            if (method === 'credit') {
+                creditInfo.style.display = 'block';
+                updateCreditInfo();
+            } else {
+                creditInfo.style.display = 'none';
+            }
+        }
+        
+        function updateCreditInfo() {
+            const select = document.getElementById('customer-select');
+            const customerId = select.value;
+            const customer = customers[customerId];
+            const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+            const newBalance = (customer ? customer.balance : 0) + total;
+            
+            document.getElementById('credit-details').innerHTML = `
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:5px;">
+                    <span>Previous Balance:</span>
+                    <span>₦${(customer ? customer.balance : 0).toLocaleString()}</span>
+                    <span>Current Invoice:</span>
+                    <span>₦${total.toLocaleString()}</span>
+                    <span style="font-weight:bold;">New Balance:</span>
+                    <span style="font-weight:bold; color:${newBalance > 0 ? '#dc2626' : '#16a34a'}">
+                        ₦${newBalance.toLocaleString()}
+                    </span>
+                </div>
+            `;
+        }
+        
+        // ==================== MODAL ====================
+        function openModal(productId) {
+            selectedProduct = products.find(p => p.id === productId);
+            if (selectedProduct) {
+                document.getElementById('modal-product-name').textContent = selectedProduct.name;
+                document.getElementById('modal-product-price').textContent = 
+                    '₦' + parseFloat(selectedProduct.sellingPrice).toLocaleString() + ' / meter';
+                document.getElementById('product-modal').classList.add('active');
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('product-modal').classList.remove('active');
+            selectedProduct = null;
+        }
+        
+        // ==================== CART ====================
+        function sellRoll() {
+            if (selectedProduct) {
+                const price = parseFloat(selectedProduct.sellingPrice);
+                const meters = parseFloat(selectedProduct.standardRollLength);
+                const totalPrice = price * meters;
+                
+                cart.push({
+                    id: selectedProduct.id + '-' + Date.now(),
+                    productId: selectedProduct.id,
+                    name: selectedProduct.name,
+                    unit: 'Roll',
+                    meters: meters,
+                    pricePerMeter: price,
+                    totalPrice: totalPrice,
+                    isRoll: true
+                });
+                renderCart();
+                updateTotal();
+                closeModal();
+            }
+        }
+        
+        function sellMeter() {
+            const meters = prompt('Enter number of meters:', '1');
+            if (meters !== null) {
+                const metersNum = parseFloat(meters);
+                if (!isNaN(metersNum) && metersNum > 0) {
+                    if (selectedProduct) {
+                        const price = parseFloat(selectedProduct.sellingPrice);
+                        const totalPrice = price * metersNum;
+                        
+                        cart.push({
+                            id: selectedProduct.id + '-' + Date.now(),
+                            productId: selectedProduct.id,
+                            name: selectedProduct.name,
+                            unit: 'm',
+                            meters: metersNum,
+                            pricePerMeter: price,
+                            totalPrice: totalPrice,
+                            isRoll: false
+                        });
+                        renderCart();
+                        updateTotal();
+                        closeModal();
+                    }
+                } else {
+                    alert('Please enter a valid number greater than 0.');
+                }
+            }
+        }
+        
+        function renderCart() {
+            const cartContainer = document.getElementById('cart-items');
+            if (cart.length === 0) {
+                cartContainer.innerHTML = '<div class="empty-cart">No items in cart. Click a product to add.</div>';
+                return;
+            }
+            
+            const cartHtml = cart.map((item, index) => `
+                <div class="cart-item">
+                    <div class="cart-item-details">
+                        <span>${item.name}</span>
+                        <span class="cart-item-unit">
+                            ${item.isRoll ? '📦 1 Roll' : '📏 ' + item.meters + 'm'}
+                        </span>
+                    </div>
+                    <div>
+                        <span style="color:#667eea;font-weight:bold;">₦${item.totalPrice.toLocaleString()}</span>
+                        <button class="btn-remove" onclick="removeFromCart(${index})">✕</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            cartContainer.innerHTML = cartHtml;
+            
+            if (selectedPayment === 'credit') {
+                updateCreditInfo();
+            }
+        }
+        
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            renderCart();
+            updateTotal();
+        }
+        
+        function updateTotal() {
+            const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+            document.getElementById('cart-total').innerHTML = `Total: ₦${total.toLocaleString()}`;
+            document.getElementById('checkout-btn').innerHTML = `Checkout (₦${total.toLocaleString()})`;
+            
+            const checkoutBtn = document.getElementById('checkout-btn');
+            checkoutBtn.disabled = cart.length === 0;
+        }
+        
+        function clearCart() {
+            if (cart.length === 0) return;
+            if (confirm('Clear all items from cart?')) {
+                cart = [];
+                renderCart();
+                updateTotal();
+            }
+        }
+        
+        // ==================== CHECKOUT ====================
+        async function checkout() {
+            if (cart.length === 0) {
+                alert('Cart is empty!');
+                return;
+            }
+            
+            const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+            const select = document.getElementById('customer-select');
+            const customerId = select.value;
+            const customer = customers[customerId];
+            const customerName = customer ? customer.name : 'Walk-in Customer';
+            
+            const checkoutBtn = document.getElementById('checkout-btn');
+            checkoutBtn.disabled = true;
+            checkoutBtn.classList.add('loading');
+            checkoutBtn.textContent = '⏳ Processing...';
+            
+            try {
+                const saleData = {
+                    customerId: customerId,
+                    customerName: customerName,
+                    items: cart.map(item => ({
+                        name: item.name,
+                        unit: item.isRoll ? 'Roll' : 'm',
+                        meters: item.meters,
+                        pricePerMeter: item.pricePerMeter,
+                        totalPrice: item.totalPrice,
+                        isRoll: item.isRoll
+                    })),
+                    totalAmount: total,
+                    paymentMethod: selectedPayment
+                };
+                
+                const response = await fetch('http://localhost:5000/api/v1/sales', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(saleData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('✅ Sale Recorded!', 
+                        `Invoice: ${result.invoiceNumber} | Total: ₦${total.toLocaleString()}`
+                    );
+                    
+                    const itemsList = cart.map(item => 
+                        '  • ' + item.name + ' - ' + (item.isRoll ? '1 Roll' : item.meters + 'm') + 
+                        ' = ₦' + item.totalPrice.toLocaleString()
+                    ).join('\n');
+                    
+                    let message = '✅ Checkout Successful!\n\n';
+                    message += '🧾 Invoice: ' + result.invoiceNumber + '\n';
+                    message += '👤 Customer: ' + customerName + '\n';
+                    message += '💳 Payment: ' + (selectedPayment === 'cash' ? 'Cash' : 'Credit') + '\n';
+                    message += '\n📋 Items:\n' + itemsList + '\n';
+                    message += '\n💰 Total: ₦' + total.toLocaleString();
+                    
+                    if (selectedPayment === 'credit' && customerId !== 'walk-in') {
+                        const previousBalance = customer ? customer.balance : 0;
+                        const newBalance = previousBalance + total;
+                        message += '\n\n📊 Balance Update:';
+                        message += '\n  Previous Balance: ₦' + previousBalance.toLocaleString();
+                        message += '\n  New Balance: ₦' + newBalance.toLocaleString();
+                    }
+                    
+                    message += '\n\nThank you for your purchase! 🙏';
+                    
+                    alert(message);
+                    clearCart();
+                    loadDashboard();
+                } else {
+                    showToast('❌ Error', result.message || 'Failed to save sale', true);
+                }
+            } catch (error) {
+                console.error('Error saving sale:', error);
+                showToast('❌ Error', 'Failed to connect to server', true);
+            } finally {
+                checkoutBtn.disabled = false;
+                checkoutBtn.classList.remove('loading');
+                const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+                checkoutBtn.textContent = `Checkout (₦${total.toLocaleString()})`;
+            }
+        }
+        
+        // ==================== DASHBOARD ====================
+        async function loadDashboard() {
+            try {
+                // Today's sales
+                const todayRes = await fetch('http://localhost:5000/api/v1/sales/today');
+                const todayData = await todayRes.json();
+                
+                // All sales
+                const allRes = await fetch('http://localhost:5000/api/v1/sales');
+                const allData = await allRes.json();
+                
+                if (todayData.success) {
+                    document.getElementById('today-sales').textContent = '₦' + (todayData.total || 0).toLocaleString();
+                    document.getElementById('today-transactions').textContent = todayData.count || 0;
+                }
+                
+                if (allData.success) {
+                    const total = allData.data.reduce((sum, sale) => sum + parseFloat(sale.totalAmount), 0);
+                    document.getElementById('total-sales').textContent = '₦' + total.toLocaleString();
+                    document.getElementById('total-transactions').textContent = allData.count || 0;
+                    
+                    // Show today's sales list
+                    if (todayData.success && todayData.data.length > 0) {
+                        document.getElementById('today-sales-list').innerHTML = renderSalesTable(todayData.data);
+                    } else {
+                        document.getElementById('today-sales-list').innerHTML = '<p style="color:#999;padding:20px;">No sales today</p>';
+                    }
+                    
+                    // Show recent sales (last 5)
+                    const recent = allData.data.slice(0, 5);
+                    if (recent.length > 0) {
+                        document.getElementById('recent-sales-list').innerHTML = renderSalesTable(recent);
+                    } else {
+                        document.getElementById('recent-sales-list').innerHTML = '<p style="color:#999;padding:20px;">No sales yet</p>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                document.getElementById('today-sales-list').innerHTML = '<p style="color:#dc2626;">Error loading sales</p>';
+            }
+        }
+        
+        // ==================== SALES HISTORY ====================
+        async function loadAllSales() {
+            try {
+                const response = await fetch('http://localhost:5000/api/v1/sales');
+                const data = await response.json();
+                
+                if (data.success && data.data.length > 0) {
+                    document.getElementById('all-sales-list').innerHTML = renderSalesTable(data.data);
+                } else {
+                    document.getElementById('all-sales-list').innerHTML = '<p style="color:#999;padding:20px;">No sales recorded yet</p>';
+                }
+            } catch (error) {
+                document.getElementById('all-sales-list').innerHTML = '<p style="color:#dc2626;">Error loading sales</p>';
+            }
+        }
+        
+        function renderSalesTable(sales) {
+            let html = `
+                <table class="sales-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Payment</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            sales.forEach(sale => {
+                const items = typeof sale.items === 'string' ? JSON.parse(sale.items) : sale.items;
+                const itemCount = items ? items.length : 0;
+                const date = new Date(sale.saleDate || sale.createdAt);
+                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                
+                html += `
+                    <tr>
+                        <td><strong>${sale.invoiceNumber}</strong></td>
+                        <td>${sale.customerName || 'Walk-in'}</td>
+                        <td>${itemCount}</td>
+                        <td><strong>₦${parseFloat(sale.totalAmount).toLocaleString()}</strong></td>
+                        <td>${sale.paymentMethod === 'cash' ? '💵 Cash' : '💳 Credit'}</td>
+                        <td>${formattedDate}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            return html;
+        }
+        
+        // ==================== TOAST ====================
+        function showToast(title, message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastTitle = document.getElementById('toast-title');
+            const toastSub = document.getElementById('toast-sub');
+            
+            toastTitle.textContent = title;
+            toastSub.textContent = message;
+            toast.className = 'toast show';
+            if (isError) {
+                toast.classList.add('error');
+            }
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 5000);
+        }
+        
+        // ==================== INIT ====================
+        document.getElementById('product-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+        
+        // Load everything
+        loadProducts();
+        setInterval(loadProducts, 30000);
+        
+        // Load dashboard when tab is shown
+        // Initial load of dashboard data
+        setTimeout(loadDashboard, 1000);
+    </script>
+</body>
+</html>

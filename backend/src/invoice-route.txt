@@ -1,0 +1,98 @@
+﻿// ============================================
+// INVOICE GENERATION API
+// ============================================
+
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
+const path = require('path');
+
+// POST /api/v1/invoice/generate - Generate PDF invoice
+app.post('/api/v1/invoice/generate', async (req, res) => {
+  try {
+    const { invoiceNumber, customerName, items, totalAmount, paymentMethod, saleDate } = req.body;
+    
+    // Create PDF document
+    const doc = new PDFDocument({
+      size: 'A4',
+      margin: 50
+    });
+    
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoiceNumber}.pdf`);
+    
+    // Pipe PDF to response
+    doc.pipe(res);
+    
+    // Header
+    doc.fontSize(24)
+       .text('🏪 Textile POS System', { align: 'center' })
+       .fontSize(14)
+       .text('Invoice', { align: 'center' })
+       .moveDown();
+    
+    // Invoice details
+    doc.fontSize(12);
+    doc.text(`Invoice Number: ${invoiceNumber}`, { align: 'right' });
+    doc.text(`Date: ${new Date(saleDate).toLocaleString()}`, { align: 'right' });
+    doc.text(`Customer: ${customerName || 'Walk-in Customer'}`, { align: 'right' });
+    doc.text(`Payment Method: ${paymentMethod || 'Cash'}`, { align: 'right' });
+    doc.moveDown();
+    
+    // Table header
+    const tableTop = doc.y;
+    doc.font('Helvetica-Bold');
+    doc.text('Item', 50, tableTop);
+    doc.text('Unit', 250, tableTop);
+    doc.text('Qty', 350, tableTop);
+    doc.text('Price', 400, tableTop);
+    doc.text('Total', 480, tableTop);
+    
+    // Table line
+    doc.moveDown();
+    doc.font('Helvetica');
+    
+    // Items
+    let total = 0;
+    items.forEach((item, index) => {
+      const y = tableTop + 25 + (index * 20);
+      const price = parseFloat(item.pricePerMeter || item.totalPrice / item.meters || 0);
+      const qty = item.isRoll ? 1 : item.meters;
+      const unit = item.isRoll ? 'Roll' : 'm';
+      const totalPrice = parseFloat(item.totalPrice) || (price * qty);
+      
+      doc.text(item.name || 'Product', 50, y);
+      doc.text(unit, 250, y);
+      doc.text(qty.toString(), 350, y);
+      doc.text(`₦${price.toFixed(2)}`, 400, y);
+      doc.text(`₦${totalPrice.toFixed(2)}`, 480, y);
+      total += totalPrice;
+    });
+    
+    // Total line
+    const totalY = tableTop + 25 + (items.length * 20) + 10;
+    doc.moveTo(50, totalY)
+       .lineTo(550, totalY)
+       .stroke();
+    
+    doc.font('Helvetica-Bold')
+       .text(`Total: ₦${total.toFixed(2)}`, 400, totalY + 10);
+    
+    // Footer
+    doc.moveDown(3);
+    doc.fontSize(10)
+       .text('Thank you for your business!', { align: 'center' })
+       .text('📍 Textile POS System - All Rights Reserved', { align: 'center' });
+    
+    // Finalize PDF
+    doc.end();
+    
+  } catch (error) {
+    console.error('Error generating invoice:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating invoice',
+      error: error.message
+    });
+  }
+});

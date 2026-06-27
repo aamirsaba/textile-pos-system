@@ -1,0 +1,562 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Textile POS - Reports</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        .status {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #166534;
+        }
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .report-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        .report-card .icon { font-size: 2rem; }
+        .report-card .title { font-weight: bold; font-size: 1.1rem; margin: 10px 0; }
+        .report-card .desc { color: #666; font-size: 0.9rem; }
+        .report-content {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            display: none;
+        }
+        .report-content.active { display: block; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th {
+            background: #f1f5f9;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            color: #333;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        tr:hover { background: #f8fafc; }
+        .summary-box {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .summary-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        .summary-item .value { font-size: 1.5rem; font-weight: bold; color: #333; }
+        .summary-item .label { color: #666; font-size: 0.9rem; }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a67d8; }
+        .btn-success { background: #48bb78; color: white; }
+        .btn-success:hover { background: #38a169; }
+        .btn-excel { background: #217346; color: white; }
+        .btn-excel:hover { background: #1a5c38; }
+        .filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        .filters input, .filters select {
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Advanced Reports</h1>
+        <p class="subtitle">Comprehensive business analytics and insights</p>
+        
+        <div class="status" id="status">✅ System ready</div>
+        
+        <div class="report-grid">
+            <div class="report-card" onclick="loadReport('daily-sales')">
+                <div class="icon">📅</div>
+                <div class="title">Daily Sales Report</div>
+                <div class="desc">View sales for any specific day</div>
+            </div>
+            <div class="report-card" onclick="loadReport('monthly-sales')">
+                <div class="icon">📊</div>
+                <div class="title">Monthly Sales Report</div>
+                <div class="desc">Monthly sales breakdown</div>
+            </div>
+            <div class="report-card" onclick="loadReport('best-selling')">
+                <div class="icon">🏆</div>
+                <div class="title">Best Selling Products</div>
+                <div class="desc">Top performing products</div>
+            </div>
+            <div class="report-card" onclick="loadReport('customer-outstanding')">
+                <div class="icon">💰</div>
+                <div class="title">Customer Outstanding</div>
+                <div class="desc">Customers with credit balances</div>
+            </div>
+            <div class="report-card" onclick="loadReport('cash-collection')">
+                <div class="icon">💵</div>
+                <div class="title">Cash Collection</div>
+                <div class="desc">Cash sales collection report</div>
+            </div>
+            <div class="report-card" onclick="loadReport('stock-movement')">
+                <div class="icon">📦</div>
+                <div class="title">Stock Movement</div>
+                <div class="desc">Inventory stock tracking</div>
+            </div>
+        </div>
+        
+        <div id="report-container" class="report-content">
+            <div id="report-content"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:5000/api/v1";
+        
+        async function loadReport(type) {
+            const container = document.getElementById('report-container');
+            const content = document.getElementById('report-content');
+            
+            container.classList.add('active');
+            content.innerHTML = '<div style="padding:20px;">Loading report...</div>';
+            
+            try {
+                let url = `${API_URL}/reports/${type}`;
+                let response = await fetch(url);
+                let data = await response.json();
+                
+                if (data.success) {
+                    renderReport(type, data, content);
+                } else {
+                    content.innerHTML = `<div style="color:#dc2626;">Error: ${data.message}</div>`;
+                }
+            } catch (error) {
+                content.innerHTML = `<div style="color:#dc2626;">Error loading report: ${error.message}</div>`;
+            }
+        }
+        
+        function renderReport(type, data, content) {
+            let html = '';
+            
+            switch(type) {
+                case 'daily-sales':
+                    html = renderDailySales(data);
+                    break;
+                case 'monthly-sales':
+                    html = renderMonthlySales(data);
+                    break;
+                case 'best-selling':
+                    html = renderBestSelling(data);
+                    break;
+                case 'customer-outstanding':
+                    html = renderCustomerOutstanding(data);
+                    break;
+                case 'cash-collection':
+                    html = renderCashCollection(data);
+                    break;
+                case 'stock-movement':
+                    html = renderStockMovement(data);
+                    break;
+                default:
+                    html = '<p>Unknown report type</p>';
+            }
+            
+            content.innerHTML = html;
+        }
+        
+        function renderDailySales(data) {
+            let html = '<h2>📅 Daily Sales Report</h2>';
+            
+            if (data.summary) {
+                html += `
+                    <div class="summary-box">
+                        <div class="summary-item">
+                            <div class="value">${data.summary.total_sales}</div>
+                            <div class="label">Transactions</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">₦${data.summary.total_amount.toLocaleString()}</div>
+                            <div class="label">Total Sales</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">₦${data.summary.average_sale.toLocaleString()}</div>
+                            <div class="label">Average Sale</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (data.data && data.data.length > 0) {
+                html += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Payment</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.data.map(row => `
+                                <tr>
+                                    <td>${row.invoice}</td>
+                                    <td>${row.customer}</td>
+                                    <td>₦${parseFloat(row.amount).toLocaleString()}</td>
+                                    <td>${row.payment}</td>
+                                    <td>${new Date(row.date).toLocaleString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                html += '<p style="padding:20px;color:#999;">No sales found for this day</p>';
+            }
+            
+            html += `<button class="btn btn-excel" onclick="exportExcel('daily-sales')">📊 Export to Excel</button>`;
+            return html;
+        }
+        
+        function renderMonthlySales(data) {
+            let html = '<h2>📊 Monthly Sales Report</h2>';
+            
+            if (data.summary) {
+                html += `
+                    <div class="summary-box">
+                        <div class="summary-item">
+                            <div class="value">${data.summary.total_transactions}</div>
+                            <div class="label">Transactions</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">₦${data.summary.total_sales.toLocaleString()}</div>
+                            <div class="label">Total Sales</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">₦${data.summary.cash_sales.toLocaleString()}</div>
+                            <div class="label">Cash Sales</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">₦${data.summary.credit_sales.toLocaleString()}</div>
+                            <div class="label">Credit Sales</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (data.data && data.data.length > 0) {
+                html += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Transactions</th>
+                                <th>Total</th>
+                                <th>Cash</th>
+                                <th>Credit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.data.map(row => `
+                                <tr>
+                                    <td>${new Date(row.date).toLocaleDateString()}</td>
+                                    <td>${row.transactions}</td>
+                                    <td>₦${parseFloat(row.total).toLocaleString()}</td>
+                                    <td>₦${parseFloat(row.cash_sales).toLocaleString()}</td>
+                                    <td>₦${parseFloat(row.credit_sales).toLocaleString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                html += '<p style="padding:20px;color:#999;">No sales found for this month</p>';
+            }
+            
+            html += `<button class="btn btn-excel" onclick="exportExcel('monthly-sales')">📊 Export to Excel</button>`;
+            return html;
+        }
+        
+        function renderBestSelling(data) {
+            let html = '<h2>🏆 Best Selling Products</h2>';
+            
+            if (data.summary) {
+                html += `
+                    <div class="summary-box">
+                        <div class="summary-item">
+                            <div class="value">${data.summary.days}</div>
+                            <div class="label">Days Analyzed</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">${data.summary.total_products}</div>
+                            <div class="label">Products Sold</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (data.data && data.data.length > 0) {
+                html += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Unit</th>
+                                <th>Times Sold</th>
+                                <th>Total Meters</th>
+                                <th>Revenue</th>
+                                <th>Avg Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.data.map(row => `
+                                <tr>
+                                    <td><strong>${row.product}</strong></td>
+                                    <td>${row.unit}</td>
+                                    <td>${row.times_sold}</td>
+                                    <td>${parseFloat(row.total_meters).toFixed(2)}</td>
+                                    <td>₦${parseFloat(row.total_revenue).toLocaleString()}</td>
+                                    <td>₦${parseFloat(row.average_price).toLocaleString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                html += '<p style="padding:20px;color:#999;">No sales data found</p>';
+            }
+            
+            return html;
+        }
+        
+        function renderCustomerOutstanding(data) {
+            let html = '<h2>💰 Customer Outstanding Report</h2>';
+            
+            if (data.summary) {
+                html += `
+                    <div class="summary-box">
+                        <div class="summary-item">
+                            <div class="value">${data.summary.total_customers}</div>
+                            <div class="label">Customers with Balance</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">₦${data.summary.total_outstanding.toLocaleString()}</div>
+                            <div class="label">Total Outstanding</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (data.data && data.data.length > 0) {
+                html += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Transactions</th>
+                                <th>Total Spent</th>
+                                <th>Outstanding Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.data.map(row => `
+                                <tr>
+                                    <td><strong>${row.customer}</strong></td>
+                                    <td>${row.transactions}</td>
+                                    <td>₦${parseFloat(row.total_spent).toLocaleString()}</td>
+                                    <td style="color:#dc2626;font-weight:bold;">₦${parseFloat(row.outstanding).toLocaleString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                html += '<p style="padding:20px;color:#999;">No outstanding balances found</p>';
+            }
+            
+            return html;
+        }
+        
+        function renderCashCollection(data) {
+            let html = '<h2>💵 Cash Collection Report</h2>';
+            
+            if (data.summary) {
+                html += `
+                    <div class="summary-box">
+                        <div class="summary-item">
+                            <div class="value">${data.summary.days}</div>
+                            <div class="label">Days</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">${data.summary.total_transactions}</div>
+                            <div class="label">Cash Transactions</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">₦${data.summary.total_collected.toLocaleString()}</div>
+                            <div class="label">Total Collected</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (data.data && data.data.length > 0) {
+                html += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Transactions</th>
+                                <th>Amount Collected</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.data.map(row => `
+                                <tr>
+                                    <td>${new Date(row.date).toLocaleDateString()}</td>
+                                    <td>${row.transactions}</td>
+                                    <td>₦${parseFloat(row.total_collected).toLocaleString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                html += '<p style="padding:20px;color:#999;">No cash sales found</p>';
+            }
+            
+            return html;
+        }
+        
+        function renderStockMovement(data) {
+            let html = '<h2>📦 Stock Movement Report</h2>';
+            
+            if (data.summary) {
+                html += `
+                    <div class="summary-box">
+                        <div class="summary-item">
+                            <div class="value">${data.summary.total_rolls}</div>
+                            <div class="label">Total Rolls</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">${data.summary.full_rolls}</div>
+                            <div class="label">Full Rolls</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">${data.summary.partial_rolls}</div>
+                            <div class="label">Partial Rolls</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value">${data.summary.total_meters.toFixed(2)}m</div>
+                            <div class="label">Total Meters</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (data.data && data.data.length > 0) {
+                html += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Roll #</th>
+                                <th>Total (m)</th>
+                                <th>Remaining (m)</th>
+                                <th>Status</th>
+                                <th>Added</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.data.map(row => `
+                                <tr>
+                                    <td><strong>${row.product}</strong></td>
+                                    <td>${row.roll_number}</td>
+                                    <td>${parseFloat(row.total_length).toFixed(2)}</td>
+                                    <td>${parseFloat(row.remaining_length).toFixed(2)}</td>
+                                    <td>${row.is_full_roll ? '✅ Full Roll' : '⚠️ Partial'}</td>
+                                    <td>${new Date(row.added_date).toLocaleDateString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                html += '<p style="padding:20px;color:#999;">No stock found</p>';
+            }
+            
+            return html;
+        }
+        
+        async function exportExcel(type) {
+            try {
+                const url = `${API_URL}/reports/export-excel?type=${type}`;
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${type}_report.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                alert('Error exporting report: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
+

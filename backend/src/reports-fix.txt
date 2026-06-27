@@ -1,0 +1,86 @@
+﻿// ============================================
+// FIXED REPORTS - Best Selling & Cash Collection
+// ============================================
+
+// GET /api/v1/reports/best-selling - Best Selling Products (FIXED - no parameters)
+app.get('/api/v1/reports/best-selling', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const days = parseInt(req.query.days) || 30;
+    
+    // Use string interpolation for the interval
+    const query = `
+      SELECT 
+        item->>'name' as product,
+        item->>'unit' as unit,
+        COUNT(*) as times_sold,
+        SUM((item->>'meters')::numeric) as total_meters,
+        SUM((item->>'totalPrice')::numeric) as total_revenue,
+        ROUND(AVG((item->>'totalPrice')::numeric), 2) as average_price
+      FROM sales,
+        jsonb_array_elements(items) as item
+      WHERE "saleDate" >= NOW() - INTERVAL '${days} days'
+      GROUP BY item->>'name', item->>'unit'
+      ORDER BY total_revenue DESC
+      LIMIT ${limit}
+    `;
+    
+    const [results] = await sequelize.query(query);
+    
+    res.json({
+      success: true,
+      data: results,
+      summary: {
+        days: days,
+        total_products: results.length
+      }
+    });
+  } catch (error) {
+    console.error('Best selling error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating best selling report',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/reports/cash-collection - Cash Collection Report (FIXED - no parameters)
+app.get('/api/v1/reports/cash-collection', async (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 7;
+    
+    const query = `
+      SELECT 
+        DATE("saleDate") as date,
+        COUNT(*) as transactions,
+        SUM("totalAmount") as total_collected
+      FROM sales 
+      WHERE "paymentMethod" = 'cash'
+        AND "saleDate" >= NOW() - INTERVAL '${days} days'
+      GROUP BY DATE("saleDate")
+      ORDER BY date DESC
+    `;
+    
+    const [results] = await sequelize.query(query);
+    
+    const total = results.reduce((sum, r) => sum + parseFloat(r.total_collected), 0);
+    
+    res.json({
+      success: true,
+      data: results,
+      summary: {
+        days: days,
+        total_transactions: results.reduce((sum, r) => sum + parseInt(r.transactions), 0),
+        total_collected: total
+      }
+    });
+  } catch (error) {
+    console.error('Cash collection error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating cash collection report',
+      error: error.message
+    });
+  }
+});

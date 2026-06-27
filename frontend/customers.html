@@ -1,0 +1,537 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Textile POS - Customer Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .header h1 { color: #333; }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a67d8; }
+        .btn-success { background: #48bb78; color: white; }
+        .btn-success:hover { background: #38a169; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-warning { background: #ed8936; color: white; }
+        .btn-warning:hover { background: #dd6b20; }
+        .btn-info { background: #4299e1; color: white; }
+        .btn-info:hover { background: #3182ce; }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8fafc;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        tr:hover { background: #f8fafc; }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .badge-good { background: #48bb78; color: white; }
+        .badge-warning { background: #ed8936; color: white; }
+        .badge-danger { background: #fc8181; color: white; }
+        .badge-info { background: #4299e1; color: white; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .stat-card .number { font-size: 1.8rem; font-weight: bold; color: #667eea; }
+        .stat-card .label { color: #666; font-size: 0.9rem; }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal h2 { color: #333; margin-bottom: 20px; }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        .form-group textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+        
+        .customer-detail {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+        .customer-detail .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .customer-detail .row:last-child { border-bottom: none; }
+        .customer-detail .label { color: #666; }
+        .customer-detail .value { font-weight: bold; color: #333; }
+        .customer-detail .value.positive { color: #16a34a; }
+        .customer-detail .value.negative { color: #dc2626; }
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .search-box { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👥 Customer Management</h1>
+            <div>
+                <button class="btn btn-success" onclick="openAddModal()">➕ Add Customer</button>
+                <a href="/admin-dashboard.html" class="btn btn-primary">← Back</a>
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card"><div class="number" id="total-customers">-</div><div class="label">Total Customers</div></div>
+            <div class="stat-card"><div class="number" id="total-outstanding">-</div><div class="label">Total Outstanding</div></div>
+            <div class="stat-card"><div class="number" id="customers-with-balance">-</div><div class="label">With Balance</div></div>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="🔍 Search customers by name, phone, or email..." onkeyup="searchCustomers()">
+        </div>
+        
+        <div class="table-container">
+            <div id="loading" style="padding:20px;text-align:center;">Loading customers...</div>
+            <div id="customers-table" style="display:none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customers-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="customer-modal">
+        <div class="modal">
+            <h2 id="modal-title">Add Customer</h2>
+            <form id="customer-form" onsubmit="saveCustomer(event)">
+                <input type="hidden" id="customer-id">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="cust-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="cust-phone">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="cust-email">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <textarea id="cust-address"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Opening Balance</label>
+                    <input type="number" id="cust-balance" value="0" step="0.01">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-danger" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="save-btn">Save Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Customer Modal -->
+    <div class="modal-overlay" id="view-modal">
+        <div class="modal">
+            <h2>👤 Customer Details</h2>
+            <div id="view-content"></div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="closeViewModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api/v1';
+        let customers = [];
+        
+        function getToken() {
+            return localStorage.getItem('token');
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+        
+        async function loadCustomers() {
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            try {
+                // Get customers from sales data
+                const response = await fetch(`${API_URL}/sales`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('customers-table').style.display = 'block';
+                
+                if (data.success) {
+                    // Extract unique customers from sales
+                    const customerMap = new Map();
+                    
+                    data.data.forEach(sale => {
+                        const name = sale.customerName || 'Unknown';
+                        if (name === 'Walk-in Customer') return;
+                        
+                        if (!customerMap.has(name)) {
+                            customerMap.set(name, {
+                                id: sale.customerId || 'cust-' + Date.now(),
+                                name: name,
+                                phone: '',
+                                email: '',
+                                address: '',
+                                balance: 0,
+                                totalSpent: 0,
+                                transactionCount: 0,
+                                lastPurchase: sale.saleDate || sale.createdAt
+                            });
+                        }
+                        
+                        const customer = customerMap.get(name);
+                        customer.totalSpent += parseFloat(sale.totalAmount || 0);
+                        customer.transactionCount += 1;
+                        
+                        // Track balance (credit sales)
+                        if (sale.paymentMethod === 'credit') {
+                            customer.balance += parseFloat(sale.totalAmount || 0);
+                        }
+                        
+                        // Update last purchase
+                        if (sale.saleDate && sale.saleDate > customer.lastPurchase) {
+                            customer.lastPurchase = sale.saleDate;
+                        }
+                    });
+                    
+                    customers = Array.from(customerMap.values());
+                    renderCustomers(customers);
+                    updateStats();
+                }
+            } catch (error) {
+                document.getElementById('loading').innerHTML = '❌ Error loading customers';
+                console.error('Error:', error);
+            }
+        }
+        
+        function renderCustomers(customersList) {
+            const tbody = document.getElementById('customers-list');
+            
+            if (customersList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#999;">No customers found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = customersList.map(c => {
+                const balanceClass = c.balance > 0 ? 'badge-danger' : (c.balance < 0 ? 'badge-good' : 'badge-info');
+                const balanceText = c.balance > 0 ? `₦${c.balance.toFixed(2)}` : (c.balance < 0 ? `(₦${Math.abs(c.balance).toFixed(2)})` : '₦0.00');
+                
+                return `
+                    <tr>
+                        <td><strong>${c.name}</strong></td>
+                        <td>${c.phone || '-'}</td>
+                        <td>${c.email || '-'}</td>
+                        <td><span class="badge ${balanceClass}">${balanceText}</span></td>
+                        <td><span class="badge ${c.transactionCount > 0 ? 'badge-good' : 'badge-info'}">${c.transactionCount > 0 ? 'Active' : 'New'}</span></td>
+                        <td>
+                            <button class="btn btn-info" style="padding:5px 10px;font-size:0.8rem;" onclick="viewCustomer('${c.id}')">👁️ View</button>
+                            <button class="btn btn-warning" style="padding:5px 10px;font-size:0.8rem;" onclick="editCustomer('${c.id}')">✏️ Edit</button>
+                            <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8rem;" onclick="deleteCustomer('${c.id}')">🗑️ Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function updateStats() {
+            document.getElementById('total-customers').textContent = customers.length;
+            const totalOutstanding = customers.reduce((sum, c) => sum + c.balance, 0);
+            document.getElementById('total-outstanding').textContent = `₦${totalOutstanding.toFixed(2)}`;
+            const withBalance = customers.filter(c => c.balance > 0).length;
+            document.getElementById('customers-with-balance').textContent = withBalance;
+        }
+        
+        function searchCustomers() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const filtered = customers.filter(c => 
+                c.name.toLowerCase().includes(searchTerm) ||
+                c.phone.includes(searchTerm) ||
+                c.email.toLowerCase().includes(searchTerm)
+            );
+            renderCustomers(filtered);
+        }
+        
+        function openAddModal() {
+            document.getElementById('modal-title').textContent = 'Add Customer';
+            document.getElementById('customer-id').value = '';
+            document.getElementById('cust-name').value = '';
+            document.getElementById('cust-phone').value = '';
+            document.getElementById('cust-email').value = '';
+            document.getElementById('cust-address').value = '';
+            document.getElementById('cust-balance').value = '0';
+            document.getElementById('save-btn').textContent = 'Add Customer';
+            document.getElementById('customer-modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('customer-modal').classList.remove('active');
+        }
+        
+        function closeViewModal() {
+            document.getElementById('view-modal').classList.remove('active');
+        }
+        
+        function viewCustomer(customerId) {
+            const customer = customers.find(c => c.id === customerId);
+            if (customer) {
+                const content = document.getElementById('view-content');
+                content.innerHTML = `
+                    <div class="customer-detail">
+                        <div class="row"><span class="label">Name</span><span class="value">${customer.name}</span></div>
+                        <div class="row"><span class="label">Phone</span><span class="value">${customer.phone || '-'}</span></div>
+                        <div class="row"><span class="label">Email</span><span class="value">${customer.email || '-'}</span></div>
+                        <div class="row"><span class="label">Address</span><span class="value">${customer.address || '-'}</span></div>
+                        <div class="row"><span class="label">Balance</span><span class="value ${customer.balance > 0 ? 'negative' : 'positive'}">₦${customer.balance.toFixed(2)}</span></div>
+                        <div class="row"><span class="label">Total Spent</span><span class="value">₦${customer.totalSpent.toFixed(2)}</span></div>
+                        <div class="row"><span class="label">Transactions</span><span class="value">${customer.transactionCount}</span></div>
+                        <div class="row"><span class="label">Last Purchase</span><span class="value">${customer.lastPurchase ? new Date(customer.lastPurchase).toLocaleDateString() : '-'}</span></div>
+                    </div>
+                `;
+                document.getElementById('view-modal').classList.add('active');
+            }
+        }
+        
+        function editCustomer(customerId) {
+            const customer = customers.find(c => c.id === customerId);
+            if (customer) {
+                document.getElementById('modal-title').textContent = 'Edit Customer';
+                document.getElementById('customer-id').value = customer.id;
+                document.getElementById('cust-name').value = customer.name;
+                document.getElementById('cust-phone').value = customer.phone || '';
+                document.getElementById('cust-email').value = customer.email || '';
+                document.getElementById('cust-address').value = customer.address || '';
+                document.getElementById('cust-balance').value = customer.balance || 0;
+                document.getElementById('save-btn').textContent = 'Update Customer';
+                document.getElementById('customer-modal').classList.add('active');
+            }
+        }
+        
+        function saveCustomer(event) {
+            event.preventDefault();
+            const id = document.getElementById('customer-id').value;
+            const name = document.getElementById('cust-name').value;
+            const phone = document.getElementById('cust-phone').value;
+            const email = document.getElementById('cust-email').value;
+            const address = document.getElementById('cust-address').value;
+            const balance = parseFloat(document.getElementById('cust-balance').value) || 0;
+            
+            const saveBtn = document.getElementById('save-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            
+            // Store in localStorage for now (since we don't have a customers table yet)
+            let savedCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
+            
+            if (id) {
+                // Update existing
+                const index = savedCustomers.findIndex(c => c.id === id);
+                if (index > -1) {
+                    savedCustomers[index] = { ...savedCustomers[index], name, phone, email, address, balance };
+                }
+            } else {
+                // Add new
+                savedCustomers.push({
+                    id: 'cust-' + Date.now(),
+                    name,
+                    phone,
+                    email,
+                    address,
+                    balance,
+                    totalSpent: 0,
+                    transactionCount: 0,
+                    createdAt: new Date().toISOString()
+                });
+            }
+            
+            localStorage.setItem('customers', JSON.stringify(savedCustomers));
+            
+            alert('✅ Customer saved successfully!');
+            closeModal();
+            loadCustomers();
+            
+            saveBtn.disabled = false;
+            saveBtn.textContent = id ? 'Update Customer' : 'Add Customer';
+        }
+        
+        function deleteCustomer(customerId) {
+            if (!confirm('Are you sure you want to delete this customer?')) return;
+            
+            let savedCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
+            savedCustomers = savedCustomers.filter(c => c.id !== customerId);
+            localStorage.setItem('customers', JSON.stringify(savedCustomers));
+            
+            alert('✅ Customer deleted successfully!');
+            loadCustomers();
+        }
+        
+        // Close modals on overlay click
+        document.getElementById('customer-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+        document.getElementById('view-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeViewModal();
+            }
+        });
+        
+        // Load customers on page load
+        loadCustomers();
+    </script>
+</body>
+</html>

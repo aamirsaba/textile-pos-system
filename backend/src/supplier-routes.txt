@@ -1,0 +1,121 @@
+﻿// ============================================
+// SUPPLIER API
+// ============================================
+
+// GET all suppliers
+app.get('/api/v1/suppliers', async (req, res) => {
+  try {
+    const query = 'SELECT * FROM suppliers WHERE is_active = true ORDER BY name';
+    const [suppliers] = await sequelize.query(query);
+    res.json({ success: true, data: suppliers, count: suppliers.length });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching suppliers', error: error.message });
+  }
+});
+
+// GET supplier by ID
+app.get('/api/v1/suppliers/:id', async (req, res) => {
+  try {
+    const query = 'SELECT * FROM suppliers WHERE id = $1';
+    const [suppliers] = await sequelize.query(query, { bind: [req.params.id] });
+    if (!suppliers || suppliers.length === 0) {
+      return res.status(404).json({ success: false, message: 'Supplier not found' });
+    }
+    res.json({ success: true, data: suppliers[0] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching supplier', error: error.message });
+  }
+});
+
+// POST create supplier
+app.post('/api/v1/suppliers', async (req, res) => {
+  try {
+    const { name, phone, email, address, contact_person, opening_balance } = req.body;
+    
+    const query = `
+      INSERT INTO suppliers (id, name, phone, email, address, contact_person, current_balance) 
+      VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6) RETURNING *
+    `;
+    const [result] = await sequelize.query(query, {
+      bind: [name, phone || null, email || null, address || null, contact_person || null, opening_balance || 0]
+    });
+    
+    res.status(201).json({ success: true, data: result[0], message: 'Supplier created successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error creating supplier', error: error.message });
+  }
+});
+
+// PUT update supplier
+app.put('/api/v1/suppliers/:id', async (req, res) => {
+  try {
+    const { name, phone, email, address, contact_person, is_active } = req.body;
+    
+    const query = `
+      UPDATE suppliers 
+      SET name = $1, phone = $2, email = $3, address = $4, contact_person = $5, is_active = $6, "updatedAt" = NOW()
+      WHERE id = $7 RETURNING *
+    `;
+    const [result] = await sequelize.query(query, {
+      bind: [name, phone || null, email || null, address || null, contact_person || null, is_active !== undefined ? is_active : true, req.params.id]
+    });
+    
+    if (!result || result.length === 0) {
+      return res.status(404).json({ success: false, message: 'Supplier not found' });
+    }
+    
+    res.json({ success: true, data: result[0], message: 'Supplier updated successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error updating supplier', error: error.message });
+  }
+});
+
+// DELETE supplier
+app.delete('/api/v1/suppliers/:id', async (req, res) => {
+  try {
+    const query = 'UPDATE suppliers SET is_active = false WHERE id = $1 RETURNING *';
+    const [result] = await sequelize.query(query, { bind: [req.params.id] });
+    
+    if (!result || result.length === 0) {
+      return res.status(404).json({ success: false, message: 'Supplier not found' });
+    }
+    
+    res.json({ success: true, message: 'Supplier deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error deleting supplier', error: error.message });
+  }
+});
+
+// POST supplier payment
+app.post('/api/v1/suppliers/:id/payment', async (req, res) => {
+  try {
+    const { amount, payment_method, remarks } = req.body;
+    const supplierId = req.params.id;
+    
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid payment amount' });
+    }
+    
+    // Update supplier balance
+    const updateQuery = `
+      UPDATE suppliers 
+      SET current_balance = current_balance - $1, total_payments = total_payments + $1, "updatedAt" = NOW()
+      WHERE id = $2 RETURNING *
+    `;
+    const [result] = await sequelize.query(updateQuery, {
+      bind: [amount, supplierId]
+    });
+    
+    if (!result || result.length === 0) {
+      return res.status(404).json({ success: false, message: 'Supplier not found' });
+    }
+    
+    res.json({
+      success: true,
+      data: result[0],
+      message: 'Payment recorded successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error recording payment', error: error.message });
+  }
+});

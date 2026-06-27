@@ -1,0 +1,270 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Textile POS System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        .status {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #166534;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .product-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        .product-name { font-weight: bold; font-size: 1.1rem; color: #333; }
+        .product-category { color: #666; font-size: 0.9rem; margin: 5px 0; }
+        .product-price { color: #667eea; font-weight: bold; font-size: 1.3rem; }
+        .product-roll { color: #999; font-size: 0.8rem; }
+        .cart-section {
+            margin-top: 30px;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 20px;
+        }
+        .cart-items { min-height: 100px; }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .cart-total {
+            font-size: 1.3rem;
+            font-weight: bold;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .btn-checkout {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-checkout:hover { background: #5a67d8; transform: scale(1.02); }
+        .btn-clear {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .btn-clear:hover { background: #dc2626; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .empty-cart { text-align: center; padding: 40px; color: #999; }
+        .header { display: flex; justify-content: space-between; align-items: center; }
+        .badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: #333; }
+        .stat-label { color: #666; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🏪 Textile POS System</h1>
+                <p class="subtitle">Touch-friendly Point of Sale for Textile Business</p>
+            </div>
+            <span class="badge">v1.0</span>
+        </div>
+        
+        <div class="status" id="status">⏳ Loading products...</div>
+        
+        <div class="stats" id="stats"></div>
+        
+        <h2>📦 Products</h2>
+        <div class="product-grid" id="products">
+            <div class="loading">Loading products...</div>
+        </div>
+        
+        <div class="cart-section">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>🛒 Cart</h2>
+                <button class="btn-clear" onclick="clearCart()">Clear Cart</button>
+            </div>
+            <div class="cart-items" id="cart-items">
+                <div class="empty-cart">No items in cart. Click a product to add.</div>
+            </div>
+            <div class="cart-total" id="cart-total">Total: ₦0.00</div>
+            <button class="btn-checkout" id="checkout-btn" onclick="checkout()">Checkout (₦0.00)</button>
+        </div>
+    </div>
+
+    <script>
+        let products = [];
+        let cart = [];
+
+        async function loadProducts() {
+            try {
+                const response = await fetch('http://localhost:5000/api/v1/products');
+                const data = await response.json();
+                
+                if (data.success) {
+                    products = data.data;
+                    document.getElementById('status').innerHTML = 
+                        '✅ Connected to backend! Loaded ' + data.count + ' products';
+                    document.getElementById('status').style.background = '#f0fdf4';
+                    document.getElementById('status').style.border = '1px solid #86efac';
+                    
+                    renderStats(data.count);
+                    renderProducts(products);
+                }
+            } catch (error) {
+                document.getElementById('status').innerHTML = 
+                    '❌ Failed to connect to backend. Make sure the server is running on port 5000.';
+                document.getElementById('status').style.background = '#fef2f2';
+                document.getElementById('status').style.border = '1px solid #fca5a5';
+                document.getElementById('products').innerHTML = 
+                    '<div style="text-align:center;padding:40px;color:#dc2626;">Error loading products</div>';
+            }
+        }
+
+        function renderStats(count) {
+            const statsHtml = `
+                <div class="stat-card">
+                    <div class="stat-value">${count}</div>
+                    <div class="stat-label">Products</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${new Date().toLocaleTimeString()}</div>
+                    <div class="stat-label">Last Updated</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">✅</div>
+                    <div class="stat-label">System Online</div>
+                </div>
+            `;
+            document.getElementById('stats').innerHTML = statsHtml;
+        }
+
+        function renderProducts(products) {
+            const productsHtml = products.map(product => `
+                <div class="product-card" onclick="addToCart('${product.id}')">
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-category">${product.category || 'General'}</div>
+                    <div class="product-price">₦${parseFloat(product.sellingPrice).toLocaleString()}</div>
+                    <div class="product-roll">${product.standardRollLength}m</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('products').innerHTML = productsHtml;
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                cart.push(product);
+                renderCart();
+                updateTotal();
+            }
+        }
+
+        function renderCart() {
+            const cartContainer = document.getElementById('cart-items');
+            if (cart.length === 0) {
+                cartContainer.innerHTML = '<div class="empty-cart">No items in cart. Click a product to add.</div>';
+                return;
+            }
+            
+            const cartHtml = cart.map((item, index) => `
+                <div class="cart-item">
+                    <span>${item.name}</span>
+                    <span style="color:#667eea;font-weight:bold;">₦${parseFloat(item.sellingPrice).toLocaleString()}</span>
+                </div>
+            `).join('');
+            
+            cartContainer.innerHTML = cartHtml;
+        }
+
+        function updateTotal() {
+            const total = cart.reduce((sum, item) => sum + parseFloat(item.sellingPrice), 0);
+            document.getElementById('cart-total').innerHTML = `Total: ₦${total.toLocaleString()}`;
+            document.getElementById('checkout-btn').innerHTML = `Checkout (₦${total.toLocaleString()})`;
+        }
+
+        function clearCart() {
+            cart = [];
+            renderCart();
+            updateTotal();
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('Cart is empty!');
+                return;
+            }
+            const total = cart.reduce((sum, item) => sum + parseFloat(item.sellingPrice), 0);
+            alert(`✅ Checkout successful!\n\nTotal: ₦${total.toLocaleString()}\nItems: ${cart.length}\n\nThank you for your purchase!`);
+            clearCart();
+        }
+
+        // Load products on page load
+        loadProducts();
+
+        // Refresh every 30 seconds
+        setInterval(loadProducts, 30000);
+    </script>
+</body>
+</html>

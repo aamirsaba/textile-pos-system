@@ -1,0 +1,1265 @@
+﻿const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const { Sequelize, DataTypes } = require('sequelize');
+const { v4: uuidv4 } = require('uuid');
+const ExcelJS = require('exceljs');
+const { Parser } = require('json2csv');
+const PDFDocument = require('pdfkit');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Database connection
+const sequelize = new Sequelize(
+  process.env.DB_DATABASE || 'textile_pos',
+  process.env.DB_USERNAME || 'postgres',
+  process.env.DB_PASSWORD || 'postgres',
+  {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    dialect: 'postgres',
+    logging: false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
+  }
+);
+
+// Define Product model
+const Product = sequelize.define('Product', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  name: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+  },
+  category: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  sellingPrice: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+  },
+  purchasePrice: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+  },
+  standardRollLength: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 22.86,
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+}, {
+  tableName: 'products',
+  timestamps: true,
+});
+
+// Define Sale model
+const Sale = sequelize.define('Sale', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  invoiceNumber: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true,
+  },
+  customerId: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+  },
+  customerName: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+  items: {
+    type: DataTypes.JSONB,
+    allowNull: false,
+  },
+  totalAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+  },
+  paymentMethod: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+  },
+  saleDate: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+}, {
+  tableName: 'sales',
+  timestamps: true,
+});
+
+// ============================================
+// AUTHENTICATION API
+// ============================================
+
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this';
+
+// Define User model
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  username: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true,
+  },
+  password: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+  },
+  full_name: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+  },
+  role: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    defaultValue: 'cashier',
+  },
+  email: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+  phone: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+  },
+  is_active: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+}, {
+  tableName: 'users',
+  timestamps: true,
+});
+
+// POST /api/v1/auth/login - Login
+app.post('/api/v1/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username and password are required'
+      });
+    }
+    
+    // Find user
+    const user = await User.findOne({
+      where: { username, is_active: true }
+    });
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid username or password'
+      });
+    }
+    
+    // Check password (using bcrypt)
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    
+    if (!isValidPassword) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid username or password'
+      });
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        username: user.username, 
+        role: user.role 
+      },
+      JWT_SECRET,
+      { expiresIn: '8h' }
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          full_name: user.full_name,
+          role: user.role,
+          email: user.email,
+          phone: user.phone
+        }
+      },
+      message: 'Login successful'
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error during login',
+      error: error.message
+    });
+  }
+});
+
+// POST /api/v1/auth/register - Register new user (Admin only)
+app.post('/api/v1/auth/register', async (req, res) => {
+  try {
+    const { username, password, full_name, role, email, phone } = req.body;
+    
+    // Check if user exists
+    const existingUser = await User.findOne({ where: { username } });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username already exists'
+      });
+    }
+    
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    // Create user
+    const user = await User.create({
+      id: uuidv4(),
+      username,
+      password: hashedPassword,
+      full_name: full_name || username,
+      role: role || 'cashier',
+      email: email || null,
+      phone: phone || null,
+      is_active: true
+    });
+    
+    res.status(201).json({
+      success: true,
+      data: {
+        id: user.id,
+        username: user.username,
+        full_name: user.full_name,
+        role: user.role
+      },
+      message: 'User created successfully'
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating user',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/auth/me - Get current user info
+app.get('/api/v1/auth/me', authenticate, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: ['id', 'username', 'full_name', 'role', 'email', 'phone', 'is_active']
+    });
+    
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching user info',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/auth/users - Get all users (Admin only)
+app.get('/api/v1/auth/users', authenticate, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin only.'
+      });
+    }
+    
+    const users = await User.findAll({
+      attributes: ['id', 'username', 'full_name', 'role', 'email', 'phone', 'is_active', 'createdAt'],
+      order: [['createdAt', 'DESC']]
+    });
+    
+    res.json({
+      success: true,
+      data: users,
+      count: users.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching users',
+      error: error.message
+    });
+  }
+});
+
+// PUT /api/v1/auth/users/:id - Update user (Admin only)
+app.put('/api/v1/auth/users/:id', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin only.'
+      });
+    }
+    
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    const { full_name, role, email, phone, is_active } = req.body;
+    
+    await user.update({
+      full_name: full_name || user.full_name,
+      role: role || user.role,
+      email: email !== undefined ? email : user.email,
+      phone: phone !== undefined ? phone : user.phone,
+      is_active: is_active !== undefined ? is_active : user.is_active
+    });
+    
+    res.json({
+      success: true,
+      data: user,
+      message: 'User updated successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error updating user',
+      error: error.message
+    });
+  }
+});
+
+// DELETE /api/v1/auth/users/:id - Delete user (Admin only)
+app.delete('/api/v1/auth/users/:id', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin only.'
+      });
+    }
+    
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Don't allow deleting yourself
+    if (user.id === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete your own account'
+      });
+    }
+    
+    await user.destroy();
+    
+    res.json({
+      success: true,
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting user',
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// AUTHENTICATION MIDDLEWARE
+// ============================================
+
+function authenticate(req, res, next) {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid or expired token'
+    });
+  }
+}
+
+function authorize(...roles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
+    if (roles.length > 0 && !roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Required role: ' + roles.join(', ')
+      });
+    }
+    
+    next();
+  };
+}
+
+// Make middleware available globally
+app.authenticate = authenticate;
+app.authorize = authorize;
+
+
+// Middleware
+app.use(helmet());
+app.use(cors());
+app.use(compression());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ============================================
+// PRODUCTS API
+// ============================================
+
+app.get('/api/v1/products', async (req, res) => {
+  try {
+    const products = await Product.findAll({
+      where: { isActive: true },
+      order: [['name', 'ASC']]
+    });
+    res.json({
+      success: true,
+      data: products,
+      count: products.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching products',
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/v1/products', async (req, res) => {
+  try {
+    const product = await Product.create({
+      id: uuidv4(),
+      name: req.body.name,
+      category: req.body.category || null,
+      sellingPrice: req.body.sellingPrice || 0,
+      purchasePrice: req.body.purchasePrice || 0,
+      standardRollLength: req.body.standardRollLength || 22.86,
+      isActive: true
+    });
+    res.status(201).json({
+      success: true,
+      data: product,
+      message: 'Product created successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error creating product',
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// INVENTORY API - RAW SQL
+// ============================================
+
+app.get('/api/v1/inventory', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        p.id as product_id,
+        p.name as product_name,
+        p.category,
+        p."sellingPrice",
+        COUNT(r.id) as total_rolls,
+        SUM(CASE WHEN r.is_full_roll = true AND r.remaining_length > 0 AND r.is_active = true THEN 1 ELSE 0 END) as full_rolls,
+        SUM(CASE WHEN r.is_full_roll = false AND r.remaining_length > 0 AND r.is_active = true THEN 1 ELSE 0 END) as partial_rolls,
+        SUM(CASE WHEN r.is_active = true THEN r.remaining_length ELSE 0 END) as total_meters
+      FROM products p
+      LEFT JOIN inventory_rolls r ON p.id = r.product_id
+      WHERE p."isActive" = true
+      GROUP BY p.id, p.name, p.category, p."sellingPrice"
+      ORDER BY p.name
+    `;
+    
+    const [results] = await sequelize.query(query);
+    res.json({
+      success: true,
+      data: results,
+      count: results.length
+    });
+  } catch (error) {
+    console.error('Inventory error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching inventory',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/v1/inventory/low-stock', async (req, res) => {
+  try {
+    const threshold = req.query.threshold || 50;
+    const query = `
+      SELECT 
+        p.id as product_id,
+        p.name as product_name,
+        p.category,
+        SUM(CASE WHEN r.is_active = true THEN r.remaining_length ELSE 0 END) as total_meters,
+        COUNT(CASE WHEN r.is_active = true AND r.remaining_length > 0 THEN 1 END) as total_rolls
+      FROM products p
+      LEFT JOIN inventory_rolls r ON p.id = r.product_id
+      WHERE p."isActive" = true
+      GROUP BY p.id, p.name, p.category
+      HAVING SUM(CASE WHEN r.is_active = true THEN r.remaining_length ELSE 0 END) < $1
+        OR SUM(CASE WHEN r.is_active = true AND r.remaining_length > 0 THEN 1 ELSE 0 END) < 2
+      ORDER BY total_meters ASC
+    `;
+    
+    const [results] = await sequelize.query(query, {
+      bind: [threshold]
+    });
+    res.json({
+      success: true,
+      data: results,
+      count: results.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching low stock items',
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/v1/inventory', async (req, res) => {
+  try {
+    const { productId, totalLength, purchasePrice, purchaseDate } = req.body;
+    
+    const productQuery = 'SELECT name, "purchasePrice" FROM products WHERE id = $1 AND "isActive" = true';
+    const [productResult] = await sequelize.query(productQuery, {
+      bind: [productId]
+    });
+    
+    if (!productResult || productResult.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+    
+    const product = productResult[0];
+    const standardLength = 22.86;
+    const isFullRoll = Math.abs(totalLength - standardLength) < 0.01;
+    
+    const countQuery = 'SELECT COUNT(*) as count FROM inventory_rolls WHERE product_id = $1';
+    const [countResult] = await sequelize.query(countQuery, {
+      bind: [productId]
+    });
+    const count = parseInt(countResult[0].count) + 1;
+    
+    const rollNumber = 'ROLL-' + product.name.substring(0, 3).toUpperCase() + '-' + String(count).padStart(3, '0');
+    
+    const insertQuery = `
+      INSERT INTO inventory_rolls (
+        id, product_id, roll_number, total_length, remaining_length, 
+        is_full_roll, purchase_price, purchase_date, is_active,
+        createdat, updatedat
+      ) VALUES (
+        gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, true, NOW(), NOW()
+      ) RETURNING *
+    `;
+    
+    const [result] = await sequelize.query(insertQuery, {
+      bind: [
+        productId,
+        rollNumber,
+        totalLength,
+        totalLength,
+        isFullRoll,
+        purchasePrice || product.purchasePrice || 0,
+        purchaseDate || new Date()
+      ]
+    });
+    
+    res.status(201).json({
+      success: true,
+      data: result[0],
+      message: 'Inventory roll added successfully'
+    });
+  } catch (error) {
+    console.error('Error adding inventory:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding inventory roll',
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// SALES API
+// ============================================
+
+app.post('/api/v1/sales', async (req, res) => {
+  try {
+    const { customerId, customerName, items, totalAmount, paymentMethod } = req.body;
+    
+    if (!items || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No items in sale'
+      });
+    }
+
+    const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
+    
+    const sale = await Sale.create({
+      id: uuidv4(),
+      invoiceNumber: invoiceNumber,
+      customerId: customerId || 'walk-in',
+      customerName: customerName || 'Walk-in Customer',
+      items: items,
+      totalAmount: totalAmount,
+      paymentMethod: paymentMethod || 'cash',
+      saleDate: new Date()
+    });
+
+    res.status(201).json({
+      success: true,
+      data: sale,
+      message: 'Sale recorded successfully',
+      invoiceNumber: invoiceNumber
+    });
+  } catch (error) {
+    console.error('Error saving sale:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error saving sale',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/v1/sales', async (req, res) => {
+  try {
+    const sales = await Sale.findAll({
+      order: [['saleDate', 'DESC']]
+    });
+    res.json({
+      success: true,
+      data: sales,
+      count: sales.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching sales',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/v1/sales/today', async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const sales = await Sale.findAll({
+      where: {
+        saleDate: {
+          [Sequelize.Op.gte]: today,
+          [Sequelize.Op.lt]: tomorrow
+        }
+      },
+      order: [['saleDate', 'DESC']]
+    });
+    
+    const totalAmount = sales.reduce((sum, sale) => sum + parseFloat(sale.totalAmount), 0);
+    
+    res.json({
+      success: true,
+      data: sales,
+      count: sales.length,
+      total: totalAmount
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching today\'s sales',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/v1/sales/:id', async (req, res) => {
+  try {
+    const sale = await Sale.findByPk(req.params.id);
+    if (!sale) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sale not found'
+      });
+    }
+    res.json({
+      success: true,
+      data: sale
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching sale',
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// REPORTS API
+// ============================================
+
+// GET /api/v1/reports/daily-sales - Daily Sales Report
+app.get('/api/v1/reports/daily-sales', async (req, res) => {
+  try {
+    const date = req.query.date || new Date().toISOString().split('T')[0];
+    
+    const query = `
+      SELECT 
+        "invoiceNumber" as invoice,
+        "customerName" as customer,
+        "totalAmount" as amount,
+        "paymentMethod" as payment,
+        "saleDate" as date
+      FROM sales 
+      WHERE DATE("saleDate") = $1
+      ORDER BY "saleDate" DESC
+    `;
+    
+    const [sales] = await sequelize.query(query, {
+      bind: [date]
+    });
+    
+    const total = sales.reduce((sum, s) => sum + parseFloat(s.amount), 0);
+    
+    res.json({
+      success: true,
+      data: sales,
+      summary: {
+        date: date,
+        total_sales: sales.length,
+        total_amount: total,
+        average_sale: sales.length > 0 ? total / sales.length : 0
+      }
+    });
+  } catch (error) {
+    console.error('Daily sales error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating daily sales report',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/reports/monthly-sales - Monthly Sales Report
+app.get('/api/v1/reports/monthly-sales', async (req, res) => {
+  try {
+    const month = req.query.month || new Date().toISOString().slice(0, 7);
+    
+    const query = `
+      SELECT 
+        DATE("saleDate") as date,
+        COUNT(*) as transactions,
+        SUM("totalAmount") as total,
+        SUM(CASE WHEN "paymentMethod" = 'cash' THEN "totalAmount" ELSE 0 END) as cash_sales,
+        SUM(CASE WHEN "paymentMethod" = 'credit' THEN "totalAmount" ELSE 0 END) as credit_sales
+      FROM sales 
+      WHERE DATE_TRUNC('month', "saleDate") = $1::date
+      GROUP BY DATE("saleDate")
+      ORDER BY date
+    `;
+    
+    const [results] = await sequelize.query(query, {
+      bind: [`${month}-01`]
+    });
+    
+    const summary = {
+      month: month,
+      total_transactions: results.reduce((sum, r) => sum + parseInt(r.transactions), 0),
+      total_sales: results.reduce((sum, r) => sum + parseFloat(r.total), 0),
+      cash_sales: results.reduce((sum, r) => sum + parseFloat(r.cash_sales), 0),
+      credit_sales: results.reduce((sum, r) => sum + parseFloat(r.credit_sales), 0),
+      days: results.length
+    };
+    
+    res.json({
+      success: true,
+      data: results,
+      summary: summary
+    });
+  } catch (error) {
+    console.error('Monthly sales error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating monthly sales report',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/reports/best-selling - Best Selling Products (FIXED)
+app.get('/api/v1/reports/best-selling', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const days = parseInt(req.query.days) || 30;
+    
+    const query = `
+      SELECT 
+        item->>'name' as product,
+        item->>'unit' as unit,
+        COUNT(*) as times_sold,
+        SUM((item->>'meters')::numeric) as total_meters,
+        SUM((item->>'totalPrice')::numeric) as total_revenue,
+        ROUND(AVG((item->>'totalPrice')::numeric), 2) as average_price
+      FROM sales,
+        jsonb_array_elements(items) as item
+      WHERE "saleDate" >= NOW() - INTERVAL '${days} days'
+      GROUP BY item->>'name', item->>'unit'
+      ORDER BY total_revenue DESC
+      LIMIT ${limit}
+    `;
+    
+    const [results] = await sequelize.query(query);
+    
+    res.json({
+      success: true,
+      data: results,
+      summary: {
+        days: days,
+        total_products: results.length
+      }
+    });
+  } catch (error) {
+    console.error('Best selling error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating best selling report',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/reports/customer-outstanding - Customer Outstanding Report
+app.get('/api/v1/reports/customer-outstanding', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        "customerName" as customer,
+        COUNT(*) as transactions,
+        SUM("totalAmount") as total_spent,
+        SUM(CASE WHEN "paymentMethod" = 'credit' THEN "totalAmount" ELSE 0 END) as outstanding
+      FROM sales 
+      WHERE "customerName" != 'Walk-in Customer'
+      GROUP BY "customerName"
+      HAVING SUM(CASE WHEN "paymentMethod" = 'credit' THEN "totalAmount" ELSE 0 END) > 0
+      ORDER BY outstanding DESC
+    `;
+    
+    const [results] = await sequelize.query(query);
+    
+    const totalOutstanding = results.reduce((sum, r) => sum + parseFloat(r.outstanding), 0);
+    
+    res.json({
+      success: true,
+      data: results,
+      summary: {
+        total_customers: results.length,
+        total_outstanding: totalOutstanding
+      }
+    });
+  } catch (error) {
+    console.error('Customer outstanding error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating customer outstanding report',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/reports/cash-collection - Cash Collection Report (FIXED)
+app.get('/api/v1/reports/cash-collection', async (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 7;
+    
+    const query = `
+      SELECT 
+        DATE("saleDate") as date,
+        COUNT(*) as transactions,
+        SUM("totalAmount") as total_collected
+      FROM sales 
+      WHERE "paymentMethod" = 'cash'
+        AND "saleDate" >= NOW() - INTERVAL '${days} days'
+      GROUP BY DATE("saleDate")
+      ORDER BY date DESC
+    `;
+    
+    const [results] = await sequelize.query(query);
+    
+    const total = results.reduce((sum, r) => sum + parseFloat(r.total_collected), 0);
+    
+    res.json({
+      success: true,
+      data: results,
+      summary: {
+        days: days,
+        total_transactions: results.reduce((sum, r) => sum + parseInt(r.transactions), 0),
+        total_collected: total
+      }
+    });
+  } catch (error) {
+    console.error('Cash collection error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating cash collection report',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/reports/stock-movement - Stock Movement Report
+app.get('/api/v1/reports/stock-movement', async (req, res) => {
+  try {
+    const productId = req.query.productId;
+    
+    let query = `
+      SELECT 
+        p.name as product,
+        r.roll_number,
+        r.total_length,
+        r.remaining_length,
+        r.is_full_roll,
+        r.purchase_date,
+        r.createdat as added_date
+      FROM inventory_rolls r
+      JOIN products p ON r.product_id = p.id
+      WHERE r.is_active = true
+    `;
+    
+    if (productId) {
+      query += ` AND r.product_id = '${productId}'`;
+    }
+    
+    query += ` ORDER BY r.createdat DESC`;
+    
+    const [results] = await sequelize.query(query);
+    
+    const totalStock = results.reduce((sum, r) => sum + parseFloat(r.remaining_length), 0);
+    const fullRolls = results.filter(r => r.is_full_roll).length;
+    const partialRolls = results.filter(r => !r.is_full_roll && parseFloat(r.remaining_length) > 0).length;
+    
+    res.json({
+      success: true,
+      data: results,
+      summary: {
+        total_rolls: results.length,
+        full_rolls: fullRolls,
+        partial_rolls: partialRolls,
+        total_meters: totalStock
+      }
+    });
+  } catch (error) {
+    console.error('Stock movement error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating stock movement report',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/reports/export-excel - Export Report as Excel
+app.get('/api/v1/reports/export-excel', async (req, res) => {
+  try {
+    const { type, startDate, endDate } = req.query;
+    
+    let data = [];
+    let reportName = '';
+    
+    switch(type) {
+      case 'daily-sales':
+        const dailyResult = await sequelize.query(`
+          SELECT 
+            "invoiceNumber", "customerName", "totalAmount", 
+            "paymentMethod", "saleDate"
+          FROM sales 
+          WHERE DATE("saleDate") = $1
+          ORDER BY "saleDate" DESC
+        `, { bind: [startDate || new Date().toISOString().split('T')[0]] });
+        data = dailyResult[0];
+        reportName = 'Daily_Sales_Report';
+        break;
+        
+      case 'monthly-sales':
+        const monthlyResult = await sequelize.query(`
+          SELECT 
+            DATE("saleDate") as date,
+            COUNT(*) as transactions,
+            SUM("totalAmount") as total_sales
+          FROM sales 
+          WHERE DATE_TRUNC('month', "saleDate") = $1::date
+          GROUP BY DATE("saleDate")
+          ORDER BY date
+        `, { bind: [startDate || new Date().toISOString().slice(0, 7) + '-01'] });
+        data = monthlyResult[0];
+        reportName = 'Monthly_Sales_Report';
+        break;
+        
+      default:
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid report type'
+        });
+    }
+    
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Report');
+    
+    if (data.length > 0) {
+      const headers = Object.keys(data[0]);
+      worksheet.addRow(headers);
+      headers.forEach((h, i) => {
+        worksheet.getCell(1, i + 1).font = { bold: true };
+      });
+      
+      data.forEach(row => {
+        worksheet.addRow(Object.values(row));
+      });
+    }
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=${reportName}.xlsx`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+    
+  } catch (error) {
+    console.error('Error exporting report:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error exporting report',
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// INVOICE GENERATION API
+// ============================================
+
+app.post('/api/v1/invoice/generate', async (req, res) => {
+  try {
+    const { invoiceNumber, customerName, items, totalAmount, paymentMethod, saleDate } = req.body;
+    
+    const doc = new PDFDocument({
+      size: 'A4',
+      margin: 50
+    });
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoiceNumber}.pdf`);
+    
+    doc.pipe(res);
+    
+    doc.fontSize(24)
+       .text('🏪 Textile POS System', { align: 'center' })
+       .fontSize(14)
+       .text('INVOICE', { align: 'center' })
+       .moveDown();
+    
+    doc.fontSize(12);
+    doc.text(`Invoice Number: ${invoiceNumber}`, { align: 'right' });
+    doc.text(`Date: ${new Date(saleDate).toLocaleString()}`, { align: 'right' });
+    doc.text(`Customer: ${customerName || 'Walk-in Customer'}`, { align: 'right' });
+    doc.text(`Payment Method: ${paymentMethod || 'Cash'}`, { align: 'right' });
+    doc.moveDown();
+    
+    const tableTop = doc.y;
+    doc.font('Helvetica-Bold');
+    doc.text('Item', 50, tableTop);
+    doc.text('Unit', 200, tableTop);
+    doc.text('Qty', 300, tableTop);
+    doc.text('Price', 400, tableTop);
+    doc.text('Total', 480, tableTop);
+    
+    doc.moveDown();
+    doc.font('Helvetica');
+    
+    let total = 0;
+    if (items && items.length > 0) {
+      items.forEach((item, index) => {
+        const y = tableTop + 25 + (index * 20);
+        const price = parseFloat(item.pricePerMeter || 0);
+        const qty = item.isRoll ? 1 : (item.meters || 1);
+        const unit = item.isRoll ? 'Roll' : 'm';
+        const totalPrice = parseFloat(item.totalPrice) || (price * qty);
+        
+        doc.text(item.name || 'Product', 50, y);
+        doc.text(unit, 200, y);
+        doc.text(qty.toString(), 300, y);
+        doc.text(`₦${price.toFixed(2)}`, 400, y);
+        doc.text(`₦${totalPrice.toFixed(2)}`, 480, y);
+        total += totalPrice;
+      });
+    }
+    
+    const totalY = tableTop + 25 + (items.length * 20) + 10;
+    doc.moveTo(50, totalY)
+       .lineTo(550, totalY)
+       .stroke();
+    
+    doc.font('Helvetica-Bold')
+       .text(`Total: ₦${(total || totalAmount || 0).toFixed(2)}`, 400, totalY + 10);
+    
+    doc.moveDown(3);
+    doc.fontSize(10)
+       .text('Thank you for your business!', { align: 'center' })
+       .text('📍 Textile POS System - All Rights Reserved', { align: 'center' });
+    
+    doc.end();
+    
+  } catch (error) {
+    console.error('Error generating invoice:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating invoice',
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// HEALTH CHECK
+// ============================================
+
+app.get('/api/v1/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Textile POS Backend is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/', (req, res) => {
+  res.json({
+    name: 'Textile POS API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      health: '/api/v1/health',
+      products: '/api/v1/products',
+      inventory: '/api/v1/inventory',
+      'inventory-low-stock': '/api/v1/inventory/low-stock',
+      sales: '/api/v1/sales',
+      'today-sales': '/api/v1/sales/today',
+      reports: '/api/v1/reports',
+      'invoice-generate': '/api/v1/invoice/generate',
+      api: '/api/v1'
+    }
+  });
+});
+
+// ============================================
+// START SERVER
+// ============================================
+
+const startServer = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Database connected');
+    console.log('✅ Database ready');
+    
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📍 Health check: http://localhost:${PORT}/api/v1/health`);
+      console.log(`📍 Products API: http://localhost:${PORT}/api/v1/products`);
+      console.log(`📍 Inventory API: http://localhost:${PORT}/api/v1/inventory`);
+      console.log(`📍 Sales API: http://localhost:${PORT}/api/v1/sales`);
+      console.log(`📍 Reports API: http://localhost:${PORT}/api/v1/reports/daily-sales`);
+      console.log(`📍 Invoice API: http://localhost:${PORT}/api/v1/invoice/generate`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
+

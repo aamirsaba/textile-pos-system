@@ -1,0 +1,561 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Textile POS - Supplier Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .header h1 { color: #333; }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a67d8; }
+        .btn-success { background: #48bb78; color: white; }
+        .btn-success:hover { background: #38a169; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-warning { background: #ed8936; color: white; }
+        .btn-warning:hover { background: #dd6b20; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .stat-card .number { font-size: 1.8rem; font-weight: bold; color: #667eea; }
+        .stat-card .label { color: #666; font-size: 0.9rem; }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8fafc;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        tr:hover { background: #f8fafc; }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .badge-warning { background: #ed8936; color: white; }
+        .badge-good { background: #48bb78; color: white; }
+        .badge-info { background: #4299e1; color: white; }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal h2 { color: #333; margin-bottom: 20px; }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Supplier Management</h1>
+            <div>
+                <button class="btn btn-success" onclick="openAddModal()">➕ Add Supplier</button>
+                <a href="/admin-dashboard.html" class="btn btn-primary">← Back</a>
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card"><div class="number" id="total-suppliers">-</div><div class="label">Total Suppliers</div></div>
+            <div class="stat-card"><div class="number" id="total-balance">-</div><div class="label">Total Balance</div></div>
+            <div class="stat-card"><div class="number" id="total-purchases">-</div><div class="label">Total Purchases</div></div>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="🔍 Search suppliers..." onkeyup="searchSuppliers()">
+        </div>
+        
+        <div class="table-container">
+            <div id="loading" style="padding:20px;text-align:center;color:#666;">Loading suppliers...</div>
+            <div id="suppliers-table" style="display:none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Contact</th>
+                            <th>Phone</th>
+                            <th>Balance</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="suppliers-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="supplier-modal">
+        <div class="modal">
+            <h2 id="modal-title">Add Supplier</h2>
+            <form id="supplier-form" onsubmit="saveSupplier(event)">
+                <input type="hidden" id="supplier-id">
+                <div class="form-group">
+                    <label>Company Name *</label>
+                    <input type="text" id="sup-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Contact Person</label>
+                    <input type="text" id="sup-contact">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="sup-phone">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="sup-email">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <textarea id="sup-address" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Opening Balance</label>
+                    <input type="number" id="sup-balance" value="0" step="0.01">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-danger" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="save-btn">Save Supplier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="modal-overlay" id="payment-modal">
+        <div class="modal">
+            <h2>💳 Make Payment</h2>
+            <form id="payment-form" onsubmit="makePayment(event)">
+                <input type="hidden" id="payment-supplier-id">
+                <div class="form-group">
+                    <label>Supplier</label>
+                    <input type="text" id="payment-supplier-name" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Current Balance</label>
+                    <input type="text" id="payment-current-balance" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Payment Amount *</label>
+                    <input type="number" id="payment-amount" required step="0.01" min="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select id="payment-method">
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="cash">Cash</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="mobile_money">Mobile Money</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <textarea id="payment-remarks" rows="2"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-danger" onclick="closePaymentModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">Record Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api/v1';
+        let suppliers = [];
+        let allSuppliers = [];
+        
+        function getToken() {
+            return localStorage.getItem('token');
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+        
+        function getHeaders() {
+            return {
+                'Authorization': `Bearer ${getToken()}`,
+                'Content-Type': 'application/json'
+            };
+        }
+        
+        async function loadSuppliers() {
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            const loadingEl = document.getElementById('loading');
+            const tableEl = document.getElementById('suppliers-table');
+            const listEl = document.getElementById('suppliers-list');
+            
+            try {
+                loadingEl.textContent = 'Loading suppliers...';
+                loadingEl.style.color = '#666';
+                
+                const response = await fetch(`${API_URL}/suppliers`, {
+                    headers: getHeaders()
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Suppliers data:', data);
+                
+                if (data.success && data.data) {
+                    allSuppliers = data.data;
+                    suppliers = [...allSuppliers];
+                    
+                    // Update stats
+                    document.getElementById('total-suppliers').textContent = suppliers.length;
+                    const totalBalance = suppliers.reduce((sum, s) => sum + parseFloat(s.current_balance || 0), 0);
+                    document.getElementById('total-balance').textContent = `₦${totalBalance.toFixed(2)}`;
+                    const totalPurchases = suppliers.reduce((sum, s) => sum + parseFloat(s.total_purchases || 0), 0);
+                    document.getElementById('total-purchases').textContent = `₦${totalPurchases.toFixed(2)}`;
+                    
+                    // Render table
+                    renderSuppliers(suppliers);
+                    
+                    loadingEl.style.display = 'none';
+                    tableEl.style.display = 'block';
+                } else {
+                    loadingEl.textContent = '❌ Error: ' + (data.message || 'Failed to load suppliers');
+                    loadingEl.style.color = '#dc2626';
+                }
+            } catch (error) {
+                loadingEl.textContent = '❌ Error loading suppliers: ' + error.message;
+                loadingEl.style.color = '#dc2626';
+                console.error('Error:', error);
+            }
+        }
+        
+        function renderSuppliers(suppliersList) {
+            const listEl = document.getElementById('suppliers-list');
+            
+            if (!suppliersList || suppliersList.length === 0) {
+                listEl.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#999;">No suppliers found</td></tr>';
+                return;
+            }
+            
+            listEl.innerHTML = suppliersList.map(s => {
+                const balance = parseFloat(s.current_balance || 0);
+                const balanceClass = balance > 0 ? 'badge-warning' : (balance < 0 ? 'badge-good' : 'badge-info');
+                const balanceText = balance > 0 ? `₦${balance.toFixed(2)}` : (balance < 0 ? `(₦${Math.abs(balance).toFixed(2)})` : '₦0.00');
+                
+                return `
+                    <tr>
+                        <td><strong>${s.name}</strong></td>
+                        <td>${s.contact_person || '-'}</td>
+                        <td>${s.phone || '-'}</td>
+                        <td><span class="badge ${balanceClass}">${balanceText}</span></td>
+                        <td>
+                            <button class="btn btn-success" style="padding:5px 10px;font-size:0.8rem;" onclick="openPaymentModal('${s.id}')">💳 Pay</button>
+                            <button class="btn btn-warning" style="padding:5px 10px;font-size:0.8rem;" onclick="editSupplier('${s.id}')">✏️ Edit</button>
+                            <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8rem;" onclick="deleteSupplier('${s.id}')">🗑️ Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function searchSuppliers() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+            if (!searchTerm) {
+                suppliers = [...allSuppliers];
+            } else {
+                suppliers = allSuppliers.filter(s => 
+                    s.name.toLowerCase().includes(searchTerm) ||
+                    (s.phone && s.phone.includes(searchTerm)) ||
+                    (s.contact_person && s.contact_person.toLowerCase().includes(searchTerm))
+                );
+            }
+            renderSuppliers(suppliers);
+        }
+        
+        function openAddModal() {
+            document.getElementById('modal-title').textContent = 'Add Supplier';
+            document.getElementById('supplier-id').value = '';
+            document.getElementById('sup-name').value = '';
+            document.getElementById('sup-contact').value = '';
+            document.getElementById('sup-phone').value = '';
+            document.getElementById('sup-email').value = '';
+            document.getElementById('sup-address').value = '';
+            document.getElementById('sup-balance').value = '0';
+            document.getElementById('save-btn').textContent = 'Add Supplier';
+            document.getElementById('supplier-modal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('supplier-modal').classList.remove('active');
+        }
+        
+        function openPaymentModal(supplierId) {
+            const supplier = allSuppliers.find(s => s.id === supplierId);
+            if (supplier) {
+                document.getElementById('payment-supplier-id').value = supplier.id;
+                document.getElementById('payment-supplier-name').value = supplier.name;
+                document.getElementById('payment-current-balance').value = `₦${parseFloat(supplier.current_balance || 0).toFixed(2)}`;
+                document.getElementById('payment-amount').value = '';
+                document.getElementById('payment-method').value = 'bank_transfer';
+                document.getElementById('payment-remarks').value = '';
+                document.getElementById('payment-modal').classList.add('active');
+            }
+        }
+        
+        function closePaymentModal() {
+            document.getElementById('payment-modal').classList.remove('active');
+        }
+        
+        function editSupplier(supplierId) {
+            const supplier = allSuppliers.find(s => s.id === supplierId);
+            if (supplier) {
+                document.getElementById('modal-title').textContent = 'Edit Supplier';
+                document.getElementById('supplier-id').value = supplier.id;
+                document.getElementById('sup-name').value = supplier.name;
+                document.getElementById('sup-contact').value = supplier.contact_person || '';
+                document.getElementById('sup-phone').value = supplier.phone || '';
+                document.getElementById('sup-email').value = supplier.email || '';
+                document.getElementById('sup-address').value = supplier.address || '';
+                document.getElementById('sup-balance').value = supplier.current_balance || 0;
+                document.getElementById('save-btn').textContent = 'Update Supplier';
+                document.getElementById('supplier-modal').classList.add('active');
+            }
+        }
+        
+        async function saveSupplier(event) {
+            event.preventDefault();
+            const id = document.getElementById('supplier-id').value;
+            const name = document.getElementById('sup-name').value;
+            const contact_person = document.getElementById('sup-contact').value;
+            const phone = document.getElementById('sup-phone').value;
+            const email = document.getElementById('sup-email').value;
+            const address = document.getElementById('sup-address').value;
+            const opening_balance = parseFloat(document.getElementById('sup-balance').value) || 0;
+            
+            const saveBtn = document.getElementById('save-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            
+            try {
+                let url = `${API_URL}/suppliers`;
+                let method = 'POST';
+                let body = { name, contact_person, phone, email, address, opening_balance };
+                
+                if (id) {
+                    url += `/${id}`;
+                    method = 'PUT';
+                    body = { name, contact_person, phone, email, address };
+                }
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: getHeaders(),
+                    body: JSON.stringify(body)
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`✅ Supplier ${id ? 'updated' : 'created'} successfully!`);
+                    closeModal();
+                    loadSuppliers();
+                } else {
+                    alert('❌ Error: ' + data.message);
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+            
+            saveBtn.disabled = false;
+            saveBtn.textContent = id ? 'Update Supplier' : 'Add Supplier';
+        }
+        
+        async function makePayment(event) {
+            event.preventDefault();
+            const supplierId = document.getElementById('payment-supplier-id').value;
+            const amount = parseFloat(document.getElementById('payment-amount').value);
+            const payment_method = document.getElementById('payment-method').value;
+            const remarks = document.getElementById('payment-remarks').value;
+            
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid payment amount');
+                return;
+            }
+            
+            const payBtn = event.target.querySelector('button[type="submit"]');
+            payBtn.disabled = true;
+            payBtn.textContent = 'Processing...';
+            
+            try {
+                const response = await fetch(`${API_URL}/suppliers/${supplierId}/payment`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ amount, payment_method, remarks })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`✅ Payment of ₦${amount.toFixed(2)} recorded successfully!`);
+                    closePaymentModal();
+                    loadSuppliers();
+                } else {
+                    alert('❌ Error: ' + data.message);
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+            
+            payBtn.disabled = false;
+            payBtn.textContent = 'Record Payment';
+        }
+        
+        async function deleteSupplier(supplierId) {
+            if (!confirm('Are you sure you want to delete this supplier?')) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/suppliers/${supplierId}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ Supplier deleted successfully!');
+                    loadSuppliers();
+                } else {
+                    alert('❌ Error: ' + data.message);
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+        
+        // Close modals on overlay click
+        document.getElementById('supplier-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+        document.getElementById('payment-modal').addEventListener('click', function(e) {
+            if (e.target === this) closePaymentModal();
+        });
+        
+        // Load suppliers on page load
+        loadSuppliers();
+    </script>
+</body>
+</html>

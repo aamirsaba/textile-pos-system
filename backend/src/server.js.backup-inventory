@@ -1,0 +1,342 @@
+﻿const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const { Sequelize, DataTypes } = require('sequelize');
+const { v4: uuidv4 } = require('uuid');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Database connection
+const sequelize = new Sequelize(
+  process.env.DB_DATABASE || 'textile_pos',
+  process.env.DB_USERNAME || 'postgres',
+  process.env.DB_PASSWORD || 'postgres',
+  {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    dialect: 'postgres',
+    logging: false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
+  }
+);
+
+// Define Product model
+const Product = sequelize.define('Product', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  name: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+  },
+  category: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  sellingPrice: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+  },
+  purchasePrice: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+  },
+  standardRollLength: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 22.86,
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+}, {
+  tableName: 'products',
+  timestamps: true,
+});
+
+// Define Sale model
+const Sale = sequelize.define('Sale', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  invoiceNumber: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true,
+  },
+  customerId: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+  },
+  customerName: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+  items: {
+    type: DataTypes.JSONB,
+    allowNull: false,
+  },
+  totalAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+  },
+  paymentMethod: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+  },
+  saleDate: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+}, {
+  tableName: 'sales',
+  timestamps: true,
+});
+
+// Middleware
+app.use(helmet());
+app.use(cors());
+app.use(compression());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Health check
+app.get('/api/v1/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Textile POS Backend is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Products API
+app.get('/api/v1/products', async (req, res) => {
+  try {
+    const products = await Product.findAll({
+      where: { isActive: true },
+      order: [['name', 'ASC']]
+    });
+    res.json({
+      success: true,
+      data: products,
+      count: products.length
+    });
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching products',
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/v1/products', async (req, res) => {
+  try {
+    console.log('Creating product:', req.body);
+    const product = await Product.create({
+      id: uuidv4(),
+      name: req.body.name,
+      category: req.body.category || null,
+      sellingPrice: req.body.sellingPrice || 0,
+      purchasePrice: req.body.purchasePrice || 0,
+      standardRollLength: req.body.standardRollLength || 22.86,
+      isActive: true
+    });
+    res.status(201).json({
+      success: true,
+      data: product,
+      message: 'Product created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating product',
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// SALES API ENDPOINTS
+// ============================================
+
+// POST /api/v1/sales - Save a sale
+app.post('/api/v1/sales', async (req, res) => {
+  try {
+    const { customerId, customerName, items, totalAmount, paymentMethod } = req.body;
+    
+    if (!items || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No items in sale'
+      });
+    }
+
+    // Generate invoice number
+    const invoiceNumber = 'INV-' + Date.now().toString().slice(-8);
+    
+    // Create sale record
+    const sale = await Sale.create({
+      id: uuidv4(),
+      invoiceNumber: invoiceNumber,
+      customerId: customerId || 'walk-in',
+      customerName: customerName || 'Walk-in Customer',
+      items: items,
+      totalAmount: totalAmount,
+      paymentMethod: paymentMethod || 'cash',
+      saleDate: new Date()
+    });
+
+    console.log('✅ Sale recorded:', invoiceNumber);
+    
+    res.status(201).json({
+      success: true,
+      data: sale,
+      message: 'Sale recorded successfully',
+      invoiceNumber: invoiceNumber
+    });
+  } catch (error) {
+    console.error('Error saving sale:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error saving sale',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/sales - Get all sales
+app.get('/api/v1/sales', async (req, res) => {
+  try {
+    const sales = await Sale.findAll({
+      order: [['saleDate', 'DESC']]
+    });
+    res.json({
+      success: true,
+      data: sales,
+      count: sales.length
+    });
+  } catch (error) {
+    console.error('Error fetching sales:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching sales',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/sales/today - Get today's sales
+app.get('/api/v1/sales/today', async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const sales = await Sale.findAll({
+      where: {
+        saleDate: {
+          [Sequelize.Op.gte]: today,
+          [Sequelize.Op.lt]: tomorrow
+        }
+      },
+      order: [['saleDate', 'DESC']]
+    });
+    
+    const totalAmount = sales.reduce((sum, sale) => sum + parseFloat(sale.totalAmount), 0);
+    
+    res.json({
+      success: true,
+      data: sales,
+      count: sales.length,
+      total: totalAmount
+    });
+  } catch (error) {
+    console.error('Error fetching today\'s sales:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching today\'s sales',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/v1/sales/:id - Get sale by ID
+app.get('/api/v1/sales/:id', async (req, res) => {
+  try {
+    const sale = await Sale.findByPk(req.params.id);
+    if (!sale) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sale not found'
+      });
+    }
+    res.json({
+      success: true,
+      data: sale
+    });
+  } catch (error) {
+    console.error('Error fetching sale:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching sale',
+      error: error.message
+    });
+  }
+});
+
+app.get('/', (req, res) => {
+  res.json({
+    name: 'Textile POS API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      health: '/api/v1/health',
+      products: '/api/v1/products',
+      sales: '/api/v1/sales',
+      'today-sales': '/api/v1/sales/today',
+      api: '/api/v1'
+    }
+  });
+});
+
+// Start server
+const startServer = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Database connected');
+    
+    await sequelize.sync({ alter: true });
+    console.log('✅ Database synced successfully');
+    
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📍 Health check: http://localhost:${PORT}/api/v1/health`);
+      console.log(`📍 Products API: http://localhost:${PORT}/api/v1/products`);
+      console.log(`📍 Sales API: http://localhost:${PORT}/api/v1/sales`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();

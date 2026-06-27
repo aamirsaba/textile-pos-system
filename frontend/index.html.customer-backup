@@ -1,0 +1,481 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Textile POS System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        .status {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #166534;
+        }
+        .status.error {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #dc2626;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .product-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        .product-name { font-weight: bold; font-size: 1.1rem; color: #333; }
+        .product-category { color: #666; font-size: 0.9rem; margin: 5px 0; }
+        .product-price { color: #667eea; font-weight: bold; font-size: 1.3rem; }
+        .product-roll { color: #999; font-size: 0.8rem; }
+        .cart-section {
+            margin-top: 30px;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 20px;
+        }
+        .cart-items { min-height: 100px; max-height: 300px; overflow-y: auto; }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .cart-item-details {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .cart-item-unit {
+            font-size: 0.8rem;
+            color: #999;
+        }
+        .cart-total {
+            font-size: 1.3rem;
+            font-weight: bold;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .btn-checkout {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-checkout:hover { background: #5a67d8; transform: scale(1.02); }
+        .btn-checkout:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-clear {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .btn-clear:hover { background: #dc2626; }
+        .btn-remove {
+            background: #f87171;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-remove:hover { background: #ef4444; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .empty-cart { text-align: center; padding: 40px; color: #999; }
+        .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: #333; }
+        .stat-label { color: #666; font-size: 0.8rem; }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal h2 { color: #333; margin-bottom: 5px; }
+        .modal .modal-price {
+            color: #667eea;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .modal .modal-subtitle { color: #666; margin: 10px 0 20px 0; }
+        .modal-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .modal-options button {
+            padding: 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        .modal-options .btn-roll {
+            background: #667eea;
+            color: white;
+        }
+        .modal-options .btn-roll:hover { background: #5a67d8; transform: scale(1.05); }
+        .modal-options .btn-meter {
+            background: #48bb78;
+            color: white;
+        }
+        .modal-options .btn-meter:hover { background: #38a169; transform: scale(1.05); }
+        .modal .btn-cancel {
+            margin-top: 15px;
+            padding: 12px;
+            width: 100%;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .modal .btn-cancel:hover { background: #cbd5e1; }
+        .modal small { display: block; color: #999; font-size: 0.8rem; margin-top: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🏪 Textile POS System</h1>
+                <p class="subtitle">Touch-friendly Point of Sale for Textile Business</p>
+            </div>
+            <span class="badge">v1.0</span>
+        </div>
+        
+        <div class="status" id="status">⏳ Loading products...</div>
+        
+        <div class="stats" id="stats"></div>
+        
+        <h2>📦 Products</h2>
+        <div class="product-grid" id="products">
+            <div class="loading">Loading products...</div>
+        </div>
+        
+        <div class="cart-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <h2>🛒 Cart</h2>
+                <button class="btn-clear" onclick="clearCart()">Clear Cart</button>
+            </div>
+            <div class="cart-items" id="cart-items">
+                <div class="empty-cart">No items in cart. Click a product to add.</div>
+            </div>
+            <div class="cart-total" id="cart-total">Total: ₦0.00</div>
+            <button class="btn-checkout" id="checkout-btn" onclick="checkout()">Checkout (₦0.00)</button>
+        </div>
+    </div>
+
+    <!-- Product Selection Modal -->
+    <div class="modal-overlay" id="product-modal">
+        <div class="modal">
+            <h2 id="modal-product-name">Product Name</h2>
+            <div class="modal-price" id="modal-product-price">₦0.00 / meter</div>
+            <p class="modal-subtitle">How do you want to sell this product?</p>
+            <div class="modal-options">
+                <button class="btn-roll" onclick="sellRoll()">
+                    📦 Roll<br>
+                    <small>22.86m (Standard)</small>
+                </button>
+                <button class="btn-meter" onclick="sellMeter()">
+                    📏 Meter<br>
+                    <small>Custom length</small>
+                </button>
+            </div>
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        let products = [];
+        let cart = [];
+        let selectedProduct = null;
+
+        async function loadProducts() {
+            try {
+                const response = await fetch('http://localhost:5000/api/v1/products');
+                const data = await response.json();
+                
+                if (data.success) {
+                    products = data.data;
+                    const statusEl = document.getElementById('status');
+                    statusEl.innerHTML = '✅ Connected to backend! Loaded ' + data.count + ' products';
+                    statusEl.className = 'status';
+                    
+                    renderStats(data.count);
+                    renderProducts(products);
+                }
+            } catch (error) {
+                const statusEl = document.getElementById('status');
+                statusEl.innerHTML = '❌ Failed to connect to backend. Make sure the server is running on port 5000.';
+                statusEl.className = 'status error';
+                document.getElementById('products').innerHTML = 
+                    '<div style="text-align:center;padding:40px;color:#dc2626;">Error loading products</div>';
+            }
+        }
+
+        function renderStats(count) {
+            const statsHtml = `
+                <div class="stat-card">
+                    <div class="stat-value">${count}</div>
+                    <div class="stat-label">Products</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${new Date().toLocaleTimeString()}</div>
+                    <div class="stat-label">Last Updated</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">✅</div>
+                    <div class="stat-label">System Online</div>
+                </div>
+            `;
+            document.getElementById('stats').innerHTML = statsHtml;
+        }
+
+        function renderProducts(products) {
+            const productsHtml = products.map(product => `
+                <div class="product-card" onclick="openModal('${product.id}')">
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-category">${product.category || 'General'}</div>
+                    <div class="product-price">₦${parseFloat(product.sellingPrice).toLocaleString()}</div>
+                    <div class="product-roll">${product.standardRollLength}m</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('products').innerHTML = productsHtml;
+        }
+
+        function openModal(productId) {
+            selectedProduct = products.find(p => p.id === productId);
+            if (selectedProduct) {
+                document.getElementById('modal-product-name').textContent = selectedProduct.name;
+                document.getElementById('modal-product-price').textContent = 
+                    '₦' + parseFloat(selectedProduct.sellingPrice).toLocaleString() + ' / meter';
+                document.getElementById('product-modal').classList.add('active');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('product-modal').classList.remove('active');
+            selectedProduct = null;
+        }
+
+        function sellRoll() {
+            if (selectedProduct) {
+                const price = parseFloat(selectedProduct.sellingPrice);
+                const meters = parseFloat(selectedProduct.standardRollLength);
+                const totalPrice = price * meters;
+                
+                cart.push({
+                    id: selectedProduct.id + '-' + Date.now(),
+                    productId: selectedProduct.id,
+                    name: selectedProduct.name,
+                    unit: 'Roll',
+                    meters: meters,
+                    pricePerMeter: price,
+                    totalPrice: totalPrice,
+                    isRoll: true
+                });
+                renderCart();
+                updateTotal();
+                closeModal();
+            }
+        }
+
+        function sellMeter() {
+            const meters = prompt('Enter number of meters:', '1');
+            if (meters !== null) {
+                const metersNum = parseFloat(meters);
+                if (!isNaN(metersNum) && metersNum > 0) {
+                    if (selectedProduct) {
+                        const price = parseFloat(selectedProduct.sellingPrice);
+                        const totalPrice = price * metersNum;
+                        
+                        cart.push({
+                            id: selectedProduct.id + '-' + Date.now(),
+                            productId: selectedProduct.id,
+                            name: selectedProduct.name,
+                            unit: 'm',
+                            meters: metersNum,
+                            pricePerMeter: price,
+                            totalPrice: totalPrice,
+                            isRoll: false
+                        });
+                        renderCart();
+                        updateTotal();
+                        closeModal();
+                    }
+                } else {
+                    alert('Please enter a valid number greater than 0.');
+                }
+            }
+        }
+
+        function renderCart() {
+            const cartContainer = document.getElementById('cart-items');
+            if (cart.length === 0) {
+                cartContainer.innerHTML = '<div class="empty-cart">No items in cart. Click a product to add.</div>';
+                return;
+            }
+            
+            const cartHtml = cart.map((item, index) => `
+                <div class="cart-item">
+                    <div class="cart-item-details">
+                        <span>${item.name}</span>
+                        <span class="cart-item-unit">
+                            ${item.isRoll ? '📦 1 Roll' : '📏 ' + item.meters + 'm'}
+                        </span>
+                    </div>
+                    <div>
+                        <span style="color:#667eea;font-weight:bold;">₦${item.totalPrice.toLocaleString()}</span>
+                        <button class="btn-remove" onclick="removeFromCart(${index})">✕</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            cartContainer.innerHTML = cartHtml;
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            renderCart();
+            updateTotal();
+        }
+
+        function updateTotal() {
+            const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+            document.getElementById('cart-total').innerHTML = `Total: ₦${total.toLocaleString()}`;
+            document.getElementById('checkout-btn').innerHTML = `Checkout (₦${total.toLocaleString()})`;
+            
+            const checkoutBtn = document.getElementById('checkout-btn');
+            checkoutBtn.disabled = cart.length === 0;
+        }
+
+        function clearCart() {
+            if (cart.length === 0) return;
+            if (confirm('Clear all items from cart?')) {
+                cart = [];
+                renderCart();
+                updateTotal();
+            }
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('Cart is empty!');
+                return;
+            }
+            
+            const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+            const itemsList = cart.map(item => 
+                '  • ' + item.name + ' - ' + (item.isRoll ? '1 Roll' : item.meters + 'm') + 
+                ' = ₦' + item.totalPrice.toLocaleString()
+            ).join('\n');
+            
+            const message = '✅ Checkout Successful!\n\n' +
+                'Items:\n' + itemsList + '\n\n' +
+                'Total: ₦' + total.toLocaleString() + '\n' +
+                'Items: ' + cart.length + '\n\n' +
+                'Thank you for your purchase! 🙏';
+            
+            alert(message);
+            clearCart();
+        }
+
+        // Close modal on overlay click
+        document.getElementById('product-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Load products on page load
+        loadProducts();
+
+        // Refresh every 30 seconds
+        setInterval(loadProducts, 30000);
+    </script>
+</body>
+</html>
