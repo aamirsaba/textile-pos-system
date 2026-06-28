@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    
+    
+    <title>🏪 Login</title>
+    <script src="config.min.js"></script>
+</head>
+<body>
+    <h1>Login Test</h1>
+    <form onsubmit="handleLogin(event)">
+        <input type="text" id="username" value="admin">
+        <input type="password" id="password" value="admin123">
+        <button type="submit">Login</button>
+    </form>
+    <div id="result"></div>
+    <script>
+        // Environment detection
+        const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        const API_URL = isLocal ? "http://localhost:5000/api/v1" : "https://aliceblue-herring-771053.hostingersite.com/api.php/api/v1";
+        console.log("Environment:", isLocal ? "LOCAL" : "PRODUCTION");
+        console.log("API URL:", API_URL);
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const result = document.getElementById('result');
+            result.textContent = 'Logging in...';
+            try {
+                const response = await fetch(API_URL + '/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+
+

@@ -1,130 +1,76 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Textile POS - Inventory</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: Arial, sans-serif;
-            background: #f0f2f5;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
             background: white;
             border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        }
-        h1 { color: #333; margin-bottom: 10px; }
-        .subtitle { color: #666; margin-bottom: 30px; }
-        .status {
-            background: #f0fdf4;
-            border: 1px solid #86efac;
-            border-radius: 10px;
-            padding: 15px;
+            padding: 20px 30px;
             margin-bottom: 20px;
-            color: #166534;
-        }
-        .status.error {
-            background: #fef2f2;
-            border: 1px solid #fca5a5;
-            color: #dc2626;
-        }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        .stat-card {
-            background: #f8fafc;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-        }
-        .stat-number { font-size: 2rem; font-weight: bold; color: #333; }
-        .stat-label { color: #666; font-size: 0.9rem; }
-        .stat-card.low-stock { border-color: #fca5a5; background: #fef2f2; }
-        .stat-card.good-stock { border-color: #86efac; background: #f0fdf4; }
-        
-        .inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .inventory-card {
-            background: #f8fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px;
-            transition: all 0.3s;
-        }
-        .inventory-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        .inventory-card.low-stock { border-color: #fca5a5; }
-        .inventory-card .product-name { font-weight: bold; font-size: 1.2rem; }
-        .inventory-card .product-category { color: #666; font-size: 0.9rem; }
-        .inventory-card .stock-info { margin-top: 10px; }
-        .inventory-card .stock-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .inventory-card .stock-row:last-child { border-bottom: none; }
-        .inventory-card .label { color: #666; }
-        .inventory-card .value { font-weight: bold; }
-        .inventory-card .value.green { color: #16a34a; }
-        .inventory-card .value.orange { color: #ed8936; }
-        .inventory-card .value.red { color: #dc2626; }
-        
-        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-        .badge {
-            background: #667eea;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-        }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        .btn-primary { background: #667eea; color: white; }
-        .btn-primary:hover { background: #5a67d8; }
-        .btn-success { background: #48bb78; color: white; }
-        .btn-success:hover { background: #38a169; }
+        .header h1 { color: #333; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: all 0.3s; }
+        .btn-back { background: #64748b; color: white; }
+        .btn-back:hover { background: #475569; }
         .btn-danger { background: #ef4444; color: white; }
         .btn-danger:hover { background: #dc2626; }
-        
-        .low-stock-alert {
-            background: #fef2f2;
-            border: 1px solid #fca5a5;
-            border-radius: 10px;
+        .btn-success { background: #48bb78; color: white; }
+        .btn-success:hover { background: #38a169; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a67d8; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
             padding: 15px;
-            margin: 15px 0;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .stat-card .number { font-size: 1.8rem; font-weight: bold; color: #667eea; }
+        .stat-card .label { color: #666; font-size: 0.9rem; }
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .inventory-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        .inventory-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .inventory-card.low-stock { border-color: #fca5a5; }
+        .inventory-card .product-name { font-weight: bold; font-size: 1.1rem; color: #333; }
+        .inventory-card .product-category { color: #666; font-size: 0.9rem; }
+        .stock-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
+            padding: 5px 0;
+            border-bottom: 1px solid #e2e8f0;
         }
-        
+        .stock-row:last-child { border-bottom: none; }
+        .value.green { color: #16a34a; font-weight: bold; }
+        .value.red { color: #dc2626; font-weight: bold; }
+        .value.orange { color: #ed8936; font-weight: bold; }
         .tabs {
             display: flex;
             gap: 10px;
@@ -134,7 +80,7 @@
         .tab-btn {
             padding: 10px 20px;
             border: none;
-            background: none;
+            background: #f1f5f9;
             cursor: pointer;
             font-size: 1rem;
             font-weight: bold;
@@ -142,286 +88,254 @@
             border-radius: 8px;
             transition: all 0.3s;
         }
-        .tab-btn:hover { background: #f1f5f9; }
+        .tab-btn:hover { background: #e2e8f0; }
         .tab-btn.active { background: #667eea; color: white; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
-        .add-roll-form {
-            background: #f8fafc;
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
         }
-        .add-roll-form select, .add-roll-form input {
+        .form-row input, .form-row select {
             padding: 10px;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             font-size: 1rem;
         }
-        .add-roll-form .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
+        .add-section {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
         }
-        
-        @media (max-width: 768px) {
-            .inventory-grid { grid-template-columns: 1fr; }
+        .low-stock-item {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <h1>Inventory Management</h1>
             <div>
-                <h1>?? Textile POS - Inventory Management</h1>
-                <p class="subtitle">Track your fabric rolls and stock levels</p>
+                <a href="admin-dashboard.html" class="btn btn-back">Back</a>
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
             </div>
-            <span class="badge">v1.0</span>
         </div>
-        
-        <div class="status" id="status">? Loading inventory...</div>
-        
-        <!-- Tabs -->
+
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('overview')">?? Overview</button>
-            <button class="tab-btn" onclick="switchTab('add')">? Add Roll</button>
-            <button class="tab-btn" onclick="switchTab('low-stock')">?? Low Stock</button>
+            <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
+            <button class="tab-btn" onclick="switchTab('add')">Add Roll</button>
+            <button class="tab-btn" onclick="switchTab('low-stock')">Low Stock</button>
         </div>
-        
-        <!-- Tab: Overview -->
+
         <div class="tab-content active" id="tab-overview">
             <div class="stats-grid" id="stats-grid"></div>
             <div class="inventory-grid" id="inventory-grid">
-                <div class="loading">Loading inventory...</div>
+                <div style="padding:20px;text-align:center;color:#666;">Loading inventory...</div>
             </div>
         </div>
-        
-        <!-- Tab: Add Roll -->
+
         <div class="tab-content" id="tab-add">
-            <h2>?? Add New Inventory Roll</h2>
-            <div class="add-roll-form">
+            <h2>Add New Roll</h2>
+            <div class="add-section">
                 <div class="form-row">
                     <select id="product-select">
                         <option value="">Select Product...</option>
                     </select>
-                    <input type="number" id="roll-length" placeholder="Roll Length (m)" step="0.01">
-                    <input type="number" id="purchase-price" placeholder="Purchase Price" step="0.01">
-                    <input type="date" id="purchase-date">
+                    <input type="number" id="roll-length" placeholder="Length (m)" step="0.01">
+                    <button class="btn btn-success" onclick="addRoll()">Add Roll</button>
                 </div>
-                <button class="btn btn-success" onclick="addRoll()" style="margin-top:10px;">? Add Roll</button>
+                <div id="add-result" style="margin-top:10px;"></div>
             </div>
-            <div id="add-result" style="margin-top:15px;"></div>
         </div>
-        
-        <!-- Tab: Low Stock -->
+
         <div class="tab-content" id="tab-low-stock">
-            <h2>?? Low Stock Alerts</h2>
-            <div id="low-stock-list"><div class="loading">Checking stock levels...</div></div>
+            <h2>Low Stock Alerts</h2>
+            <div id="low-stock-list" style="padding:20px;">Loading...</div>
         </div>
     </div>
-    
+
     <script>
+        // Environment detection
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_URL = isLocal ? 'http://localhost:5000/api/v1' : 'https://aliceblue-herring-771053.hostingersite.com/api.php/api/v1';
+        console.log('Environment:', isLocal ? 'LOCAL' : 'PRODUCTION');
+
         let products = [];
         let inventory = [];
-        const API_URL = 'https://aliceblue-herring-771053.hostingersite.com/api/v1';
-        
+
+        function getToken() {
+            return localStorage.getItem('token');
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+
         function switchTab(tab) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + tab).classList.add('active');
             document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
-            
             if (tab === 'overview') loadInventory();
             if (tab === 'low-stock') loadLowStock();
         }
-        
+
         async function loadProducts() {
+            const token = getToken();
+            if (!token) { window.location.href = 'login.html'; return; }
             try {
-                const response = await fetch(API_URL + '/products');
+                const response = await fetch(API_URL + '/products', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
                 const data = await response.json();
                 if (data.success) {
                     products = data.data;
                     const select = document.getElementById('product-select');
                     select.innerHTML = '<option value="">Select Product...</option>';
                     products.forEach(p => {
-                        select.innerHTML += `<option value="${p.id}">${p.name} (?${p.sellingPrice}/m)</option>`;
+                        select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
                     });
                 }
             } catch (error) {
                 console.error('Error loading products:', error);
             }
         }
-        
+
         async function loadInventory() {
+            const token = getToken();
+            if (!token) { window.location.href = 'login.html'; return; }
             try {
-                const response = await fetch(API_URL + '/inventory');
+                const response = await fetch(API_URL + '/inventory', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
                 const data = await response.json();
-                
                 if (data.success) {
                     inventory = data.data;
-                    const statusEl = document.getElementById('status');
-                    statusEl.innerHTML = '? Inventory loaded! ' + data.count + ' products in stock';
-                    statusEl.className = 'status';
-                    
-                    renderStats(inventory);
                     renderInventory(inventory);
+                    renderStats(inventory);
                 }
             } catch (error) {
-                const statusEl = document.getElementById('status');
-                statusEl.innerHTML = '? Error loading inventory. Make sure the server is running.';
-                statusEl.className = 'status error';
+                document.getElementById('inventory-grid').innerHTML = '<div style="color:#dc2626;">Error loading inventory</div>';
             }
         }
-        
-        function renderStats(inventory) {
-            const totalProducts = inventory.length;
-            const totalRolls = inventory.reduce((sum, item) => sum + parseInt(item.total_rolls || 0), 0);
-            const totalMeters = inventory.reduce((sum, item) => sum + parseFloat(item.total_meters || 0), 0);
-            const lowStockItems = inventory.filter(item => parseFloat(item.total_meters || 0) < 50);
-            
-            const statsHtml = `
-                <div class="stat-card ${totalRolls > 0 ? 'good-stock' : ''}">
-                    <div class="stat-number">${totalRolls}</div>
-                    <div class="stat-label">Total Rolls</div>
-                </div>
-                <div class="stat-card ${totalMeters > 100 ? 'good-stock' : 'low-stock'}">
-                    <div class="stat-number">${totalMeters.toFixed(1)}m</div>
-                    <div class="stat-label">Total Meters</div>
-                </div>
-                <div class="stat-card ${lowStockItems.length > 0 ? 'low-stock' : 'good-stock'}">
-                    <div class="stat-number">${lowStockItems.length}</div>
-                    <div class="stat-label">Low Stock Items</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${totalProducts}</div>
-                    <div class="stat-label">Products</div>
-                </div>
-            `;
-            document.getElementById('stats-grid').innerHTML = statsHtml;
-        }
-        
+
         function renderInventory(inventory) {
+            const grid = document.getElementById('inventory-grid');
             if (!inventory || inventory.length === 0) {
-                document.getElementById('inventory-grid').innerHTML = '<p style="padding:20px;">No inventory found. Add some rolls!</p>';
+                grid.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">No inventory found</div>';
                 return;
             }
-            
-            const cardsHtml = inventory.map(item => {
+            grid.innerHTML = inventory.map(item => {
                 const totalMeters = parseFloat(item.total_meters || 0);
                 const isLowStock = totalMeters < 50;
-                const fullRolls = parseInt(item.full_rolls || 0);
-                const partialRolls = parseInt(item.partial_rolls || 0);
-                
                 return `
                     <div class="inventory-card ${isLowStock ? 'low-stock' : ''}">
                         <div class="product-name">${item.product_name}</div>
-                        <div class="product-category">${item.category || 'General'} | ?${item.sellingPrice}/m</div>
-                        <div class="stock-info">
-                            <div class="stock-row">
-                                <span class="label">Total Meters</span>
-                                <span class="value ${isLowStock ? 'red' : 'green'}">${totalMeters.toFixed(2)}m</span>
-                            </div>
-                            <div class="stock-row">
-                                <span class="label">Full Rolls</span>
-                                <span class="value green">${fullRolls}</span>
-                            </div>
-                            <div class="stock-row">
-                                <span class="label">Partial Rolls</span>
-                                <span class="value orange">${partialRolls}</span>
-                            </div>
-                            <div class="stock-row">
-                                <span class="label">Total Rolls</span>
-                                <span class="value">${parseInt(item.total_rolls || 0)}</span>
-                            </div>
-                            ${isLowStock ? '<div style="margin-top:10px;color:#dc2626;font-weight:bold;">?? LOW STOCK</div>' : ''}
+                        <div class="product-category">${item.category || 'General'}</div>
+                        <div class="stock-row">
+                            <span>Total Meters</span>
+                            <span class="value ${isLowStock ? 'red' : 'green'}">${totalMeters.toFixed(2)}m</span>
                         </div>
+                        <div class="stock-row">
+                            <span>Full Rolls</span>
+                            <span class="value green">${parseInt(item.full_rolls || 0)}</span>
+                        </div>
+                        <div class="stock-row">
+                            <span>Partial Rolls</span>
+                            <span class="value orange">${parseInt(item.partial_rolls || 0)}</span>
+                        </div>
+                        ${isLowStock ? '<div style="margin-top:10px;color:#dc2626;font-weight:bold;">LOW STOCK</div>' : ''}
                     </div>
                 `;
             }).join('');
-            
-            document.getElementById('inventory-grid').innerHTML = cardsHtml;
         }
-        
+
+        function renderStats(inventory) {
+            const totalRolls = inventory.reduce((sum, item) => sum + parseInt(item.total_rolls || 0), 0);
+            const totalMeters = inventory.reduce((sum, item) => sum + parseFloat(item.total_meters || 0), 0);
+            const lowStockCount = inventory.filter(item => parseFloat(item.total_meters || 0) < 50).length;
+
+            document.getElementById('stats-grid').innerHTML = `
+                <div class="stat-card"><div class="number">${totalRolls}</div><div class="label">Total Rolls</div></div>
+                <div class="stat-card"><div class="number">${totalMeters.toFixed(1)}m</div><div class="label">Total Meters</div></div>
+                <div class="stat-card"><div class="number">${lowStockCount}</div><div class="label">Low Stock</div></div>
+                <div class="stat-card"><div class="number">${inventory.length}</div><div class="label">Products</div></div>
+            `;
+        }
+
         async function loadLowStock() {
+            const token = getToken();
+            if (!token) { window.location.href = 'login.html'; return; }
             try {
-                const response = await fetch(API_URL + '/inventory/low-stock');
+                const response = await fetch(API_URL + '/inventory/low-stock', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
                 const data = await response.json();
-                
-                if (data.success) {
-                    const list = document.getElementById('low-stock-list');
-                    if (data.count === 0) {
-                        list.innerHTML = '<p style="padding:20px;color:#16a34a;">? All products have sufficient stock!</p>';
-                    } else {
-                        let html = '<div style="display:grid;grid-template-columns:1fr;gap:10px;">';
-                        data.data.forEach(item => {
-                            html += `
-                                <div class="low-stock-alert">
-                                    <div>
-                                        <strong>${item.product_name}</strong>
-                                        <span style="color:#666;margin-left:10px;">${item.category}</span>
-                                    </div>
-                                    <div>
-                                        <span style="color:#dc2626;font-weight:bold;">${parseFloat(item.total_meters || 0).toFixed(1)}m</span>
-                                        <span style="color:#666;margin-left:10px;">${item.total_rolls || 0} rolls</span>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                        html += '</div>';
-                        list.innerHTML = html;
-                    }
+                const list = document.getElementById('low-stock-list');
+                if (data.success && data.data && data.data.length > 0) {
+                    list.innerHTML = data.data.map(item => `
+                        <div class="low-stock-item">
+                            <span><strong>${item.product_name}</strong></span>
+                            <span style="color:#dc2626;font-weight:bold;">${parseFloat(item.total_meters || 0).toFixed(1)}m</span>
+                        </div>
+                    `).join('');
+                } else {
+                    list.innerHTML = '<div style="color:#16a34a;">All products have sufficient stock!</div>';
                 }
             } catch (error) {
-                document.getElementById('low-stock-list').innerHTML = '<p style="color:#dc2626;">Error loading low stock items</p>';
+                document.getElementById('low-stock-list').innerHTML = '<div style="color:#dc2626;">Error loading</div>';
             }
         }
-        
+
         async function addRoll() {
             const productId = document.getElementById('product-select').value;
             const length = document.getElementById('roll-length').value;
-            const price = document.getElementById('purchase-price').value;
-            const date = document.getElementById('purchase-date').value;
-            
-            if (!productId) { alert('Please select a product'); return; }
-            if (!length || length <= 0) { alert('Please enter a valid roll length'); return; }
-            
-            const resultDiv = document.getElementById('add-result');
-            resultDiv.innerHTML = '<div style="color:#666;">Adding roll...</div>';
-            
+            if (!productId || !length) {
+                document.getElementById('add-result').innerHTML = '<div style="color:#dc2626;">Please select product and enter length</div>';
+                return;
+            }
+            const token = getToken();
             try {
                 const response = await fetch(API_URL + '/inventory', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
                     body: JSON.stringify({
                         productId: productId,
                         totalLength: parseFloat(length),
-                        purchasePrice: parseFloat(price) || 0,
-                        purchaseDate: date || new Date().toISOString().split('T')[0]
+                        purchasePrice: 0
                     })
                 });
-                
                 const data = await response.json();
-                
                 if (data.success) {
-                    resultDiv.innerHTML = `<div style="color:#16a34a;">? ${data.message}: ${data.data.rollNumber}</div>`;
+                    document.getElementById('add-result').innerHTML = `<div style="color:#16a34a;">Roll added: ${data.data.roll_number}</div>`;
                     document.getElementById('roll-length').value = '';
-                    document.getElementById('purchase-price').value = '';
                     loadInventory();
                 } else {
-                    resultDiv.innerHTML = `<div style="color:#dc2626;">? ${data.message}</div>`;
+                    document.getElementById('add-result').innerHTML = `<div style="color:#dc2626;">Error: ${data.message}</div>`;
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<div style="color:#dc2626;">? Error: ${error.message}</div>`;
+                document.getElementById('add-result').innerHTML = `<div style="color:#dc2626;">Error: ${error.message}</div>`;
             }
         }
-        
-        // Load everything on page load
+
         loadProducts();
         loadInventory();
-        setInterval(loadInventory, 30000);
     </script>
 </body>
 </html>
-

@@ -1,18 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
-    <title>Textile POS - Settings</title>
+    <meta charset="UTF-8">
+    <title>Settings</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: Arial, sans-serif;
-            background: #f0f2f5;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
         .header {
             background: white;
             border-radius: 20px;
@@ -26,21 +20,13 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
         .header h1 { color: #333; }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        .btn-primary { background: #667eea; color: white; }
-        .btn-primary:hover { background: #5a67d8; }
-        .btn-success { background: #48bb78; color: white; }
-        .btn-success:hover { background: #38a169; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: all 0.3s; }
+        .btn-back { background: #64748b; color: white; }
+        .btn-back:hover { background: #475569; }
         .btn-danger { background: #ef4444; color: white; }
         .btn-danger:hover { background: #dc2626; }
-        
+        .btn-success { background: #48bb78; color: white; }
+        .btn-success:hover { background: #38a169; }
         .card {
             background: white;
             border-radius: 15px;
@@ -54,167 +40,64 @@
             padding-bottom: 10px;
             border-bottom: 2px solid #e2e8f0;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #333;
-        }
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-        .form-group input:focus, .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-        }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        .settings-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-        
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .settings-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>?? System Settings</h1>
+            <h1>System Settings</h1>
             <div>
-                <a href="/admin-dashboard.html" class="btn btn-primary">? Back</a>
+                <a href="admin-dashboard.html" class="btn btn-back">Back</a>
                 <button class="btn btn-danger" onclick="logout()">Logout</button>
             </div>
         </div>
-        
+
         <div class="card">
-            <h2>?? Company Information</h2>
-            <div class="form-group">
-                <label>Company Name</label>
-                <input type="text" id="company-name" value="Textile POS System">
-            </div>
-            <div class="form-group">
-                <label>Company Address</label>
-                <input type="text" id="company-address" value="123 Business Street, City, Country">
-            </div>
+            <h2>Company Information</h2>
+            <div class="form-group"><label>Company Name</label><input type="text" id="company-name" value="Textile POS System"></div>
+            <div class="form-group"><label>Company Address</label><input type="text" id="company-address" value="123 Business Street, City, Country"></div>
             <div class="form-row">
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="text" id="company-phone" value="+1234567890">
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="company-email" value="info@textilepos.com">
-                </div>
+                <div class="form-group"><label>Phone</label><input type="text" id="company-phone" value="+1234567890"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="company-email" value="info@textilepos.com"></div>
             </div>
         </div>
-        
+
         <div class="card">
-            <h2>??? Invoice Settings</h2>
+            <h2>Invoice Settings</h2>
             <div class="form-row">
-                <div class="form-group">
-                    <label>Invoice Prefix</label>
-                    <input type="text" id="invoice-prefix" value="INV-">
-                </div>
-                <div class="form-group">
-                    <label>Default Roll Length (m)</label>
-                    <input type="number" id="default-roll-length" value="22.86" step="0.01">
-                </div>
+                <div class="form-group"><label>Invoice Prefix</label><input type="text" id="invoice-prefix" value="INV-"></div>
+                <div class="form-group"><label>Roll Length (m)</label><input type="number" id="default-roll-length" value="22.86" step="0.01"></div>
             </div>
-            <div class="form-group">
-                <label>Tax Rate (%)</label>
-                <input type="number" id="tax-rate" value="7.5" step="0.1">
-            </div>
+            <div class="form-group"><label>Tax Rate (%)</label><input type="number" id="tax-rate" value="7.5" step="0.1"></div>
         </div>
-        
-        <div class="card">
-            <h2>?? WhatsApp Integration</h2>
-            <div class="form-group">
-                <label>WhatsApp API URL</label>
-                <input type="text" id="whatsapp-url" value="https://graph.facebook.com/v18.0">
-            </div>
-            <div class="form-group">
-                <label>WhatsApp Phone Number ID</label>
-                <input type="text" id="whatsapp-phone-id" value="">
-            </div>
-            <div class="form-group">
-                <label>WhatsApp API Token</label>
-                <input type="password" id="whatsapp-token" value="">
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2>?? Email Settings</h2>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>SMTP Host</label>
-                    <input type="text" id="smtp-host" value="smtp.gmail.com">
-                </div>
-                <div class="form-group">
-                    <label>SMTP Port</label>
-                    <input type="number" id="smtp-port" value="587">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Email Username</label>
-                    <input type="text" id="email-username" value="">
-                </div>
-                <div class="form-group">
-                    <label>Email Password</label>
-                    <input type="password" id="email-password" value="">
-                </div>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2>?? Backup & Maintenance</h2>
-            <div class="settings-actions">
-                <button class="btn btn-primary" onclick="backupDatabase()">?? Backup Database</button>
-                <button class="btn btn-warning" style="background:#ed8936;color:white;" onclick="clearCache()">??? Clear Cache</button>
-                <button class="btn btn-danger" onclick="resetSystem()">?? Reset System</button>
-            </div>
-        </div>
-        
+
         <div class="card">
             <div class="settings-actions">
-                <button class="btn btn-success" onclick="saveSettings()">?? Save All Settings</button>
-                <button class="btn btn-primary" onclick="loadSettings()">?? Load Settings</button>
+                <button class="btn btn-success" onclick="saveSettings()">Save Settings</button>
+                <button class="btn btn-back" onclick="loadSettings()">Load Settings</button>
             </div>
             <div id="message" style="margin-top:15px;display:none;"></div>
         </div>
     </div>
 
     <script>
-        const API_URL = 'https://aliceblue-herring-771053.hostingersite.com/api/v1';
-        
-        function getToken() {
-            return localStorage.getItem('token');
-        }
-        
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_URL = isLocal ? 'http://localhost:5000/api/v1' : 'https://aliceblue-herring-771053.hostingersite.com/api.php/api/v1';
+
+        function getToken() { return localStorage.getItem('token'); }
+
         function logout() {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            window.location.href = '/login.html';
+            window.location.href = 'login.html';
         }
-        
+
         function saveSettings() {
             const settings = {
                 companyName: document.getElementById('company-name').value,
@@ -223,28 +106,16 @@
                 companyEmail: document.getElementById('company-email').value,
                 invoicePrefix: document.getElementById('invoice-prefix').value,
                 defaultRollLength: document.getElementById('default-roll-length').value,
-                taxRate: document.getElementById('tax-rate').value,
-                whatsappUrl: document.getElementById('whatsapp-url').value,
-                whatsappPhoneId: document.getElementById('whatsapp-phone-id').value,
-                whatsappToken: document.getElementById('whatsapp-token').value,
-                smtpHost: document.getElementById('smtp-host').value,
-                smtpPort: document.getElementById('smtp-port').value,
-                emailUsername: document.getElementById('email-username').value,
-                emailPassword: document.getElementById('email-password').value
+                taxRate: document.getElementById('tax-rate').value
             };
-            
             localStorage.setItem('systemSettings', JSON.stringify(settings));
-            
             const msg = document.getElementById('message');
             msg.style.display = 'block';
             msg.style.color = '#16a34a';
-            msg.textContent = '? Settings saved successfully!';
-            
-            setTimeout(() => {
-                msg.style.display = 'none';
-            }, 3000);
+            msg.textContent = 'Settings saved successfully!';
+            setTimeout(() => { msg.style.display = 'none'; }, 3000);
         }
-        
+
         function loadSettings() {
             const settings = JSON.parse(localStorage.getItem('systemSettings'));
             if (settings) {
@@ -255,95 +126,15 @@
                 document.getElementById('invoice-prefix').value = settings.invoicePrefix || 'INV-';
                 document.getElementById('default-roll-length').value = settings.defaultRollLength || '22.86';
                 document.getElementById('tax-rate').value = settings.taxRate || '7.5';
-                document.getElementById('whatsapp-url').value = settings.whatsappUrl || 'https://graph.facebook.com/v18.0';
-                document.getElementById('whatsapp-phone-id').value = settings.whatsappPhoneId || '';
-                document.getElementById('whatsapp-token').value = settings.whatsappToken || '';
-                document.getElementById('smtp-host').value = settings.smtpHost || 'smtp.gmail.com';
-                document.getElementById('smtp-port').value = settings.smtpPort || '587';
-                document.getElementById('email-username').value = settings.emailUsername || '';
-                document.getElementById('email-password').value = settings.emailPassword || '';
-                
                 const msg = document.getElementById('message');
                 msg.style.display = 'block';
                 msg.style.color = '#16a34a';
-                msg.textContent = '? Settings loaded successfully!';
-                
-                setTimeout(() => {
-                    msg.style.display = 'none';
-                }, 3000);
-            } else {
-                const msg = document.getElementById('message');
-                msg.style.display = 'block';
-                msg.style.color = '#ed8936';
-                msg.textContent = '?? No saved settings found. Using defaults.';
-                
-                setTimeout(() => {
-                    msg.style.display = 'none';
-                }, 3000);
+                msg.textContent = 'Settings loaded successfully!';
+                setTimeout(() => { msg.style.display = 'none'; }, 3000);
             }
         }
-        
-        function backupDatabase() {
-            if (confirm('This will download a backup of your database. Continue?')) {
-                const msg = document.getElementById('message');
-                msg.style.display = 'block';
-                msg.style.color = '#667eea';
-                msg.textContent = '? Creating backup...';
-                
-                // Simulate backup
-                setTimeout(() => {
-                    msg.style.color = '#16a34a';
-                    msg.textContent = '? Database backup created successfully!';
-                    
-                    // Create a simulated backup file
-                    const blob = new Blob(['Database backup created on ' + new Date().toISOString()], {type: 'text/plain'});
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `backup_${new Date().toISOString().slice(0,10)}.sql`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    setTimeout(() => {
-                        msg.style.display = 'none';
-                    }, 3000);
-                }, 2000);
-            }
-        }
-        
-        function clearCache() {
-            if (confirm('Clear all cached data? This will not affect your database.')) {
-                localStorage.removeItem('systemSettings');
-                const msg = document.getElementById('message');
-                msg.style.display = 'block';
-                msg.style.color = '#16a34a';
-                msg.textContent = '? Cache cleared successfully!';
-                
-                setTimeout(() => {
-                    msg.style.display = 'none';
-                }, 3000);
-            }
-        }
-        
-        function resetSystem() {
-            if (confirm('?? WARNING: This will reset all settings. Are you sure?')) {
-                if (confirm('Last chance! Are you absolutely sure?')) {
-                    localStorage.clear();
-                    const msg = document.getElementById('message');
-                    msg.style.display = 'block';
-                    msg.style.color = '#dc2626';
-                    msg.textContent = '?? System reset complete. Refresh to start fresh.';
-                    
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
-                }
-            }
-        }
-        
-        // Auto-load settings on page load
+
         loadSettings();
     </script>
 </body>
 </html>
-
