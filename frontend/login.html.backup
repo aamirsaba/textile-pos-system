@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Textile POS - Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-container h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .login-container .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-login:hover {
+            background: #5a67d8;
+            transform: scale(1.02);
+        }
+        .btn-login:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #dc2626;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .error-message.show { display: block; }
+        .demo-credentials {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .demo-credentials strong { color: #333; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>?? Textile POS</h1>
+        <p class="subtitle">Sign in to continue</p>
+        
+        <div class="error-message" id="error-message">Invalid username or password</div>
+        
+        <form id="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="username" placeholder="Enter username" value="admin" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Enter password" value="admin123" required>
+            </div>
+            <button type="submit" class="btn-login" id="login-btn">Sign In</button>
+        </form>
+        
+        <div class="demo-credentials">
+            <strong>Demo Credentials:</strong><br>
+            Admin: admin / admin123<br>
+            Cashier: cashier / cashier123
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://aliceblue-herring-771053.hostingersite.com/api/v1';
+        
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('error-message');
+            const loginBtn = document.getElementById('login-btn');
+            
+            errorEl.classList.remove('show');
+            loginBtn.disabled = true;
+            loginBtn.textContent = '? Signing in...';
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('token', data.data.token);
+                    localStorage.setItem('user', JSON.stringify(data.data.user));
+                    
+                    if (data.data.user.role === 'admin') {
+                        window.location.href = '/admin-dashboard.html';
+                    } else {
+                        window.location.href = '/index.html';
+                    }
+                } else {
+                    errorEl.textContent = data.message || 'Invalid username or password';
+                    errorEl.classList.add('show');
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                }
+            } catch (error) {
+                errorEl.textContent = 'Connection error. Please try again.';
+                errorEl.classList.add('show');
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+            }
+        }
+    </script>
+</body>
+</html>
+
