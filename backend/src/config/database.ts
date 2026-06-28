@@ -3,18 +3,22 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-console.log('🔍 DATABASE_URL:', process.env.DATABASE_URL ? 'Set ✅' : 'Not set ❌');
+console.log('🔍 DB_HOST:', process.env.DB_HOST || 'Not set');
+console.log('🔍 DB_PORT:', process.env.DB_PORT || 'Not set');
 
-const sequelize = new Sequelize(process.env.DATABASE_URL || '', {
+const sequelize = new Sequelize({
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || '5432', 10),
+  database: process.env.DB_DATABASE || 'textile_pos',
+  username: process.env.DB_USERNAME || 'textile_user',
+  password: process.env.DB_PASSWORD || '',
   dialect: 'postgres',
   dialectOptions: {
     ssl: {
       require: true,
       rejectUnauthorized: false
     },
-    family: 4,
-    // Explicitly set the application name
-    application_name: 'textile-pos'
+    family: 4
   },
   logging: false,
   pool: {

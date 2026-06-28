@@ -1,6 +1,5 @@
 ﻿const express = require('express');
 const Product = require('../models/Product');
-const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 
@@ -8,7 +7,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const products = await Product.findAll({
-      where: { isActive: true },
+      where: { is_active: true },
       order: [['name', 'ASC']]
     });
     res.json({
@@ -55,13 +54,14 @@ router.post('/', async (req, res) => {
   try {
     console.log('Creating product with data:', req.body);
     const product = await Product.create({
-      id: uuidv4(),
       name: req.body.name,
+      code: req.body.code || 'PROD-' + Date.now(),
+      price: req.body.price || 0,
+      cost: req.body.cost || 0,
       category: req.body.category || null,
-      sellingPrice: req.body.sellingPrice || 0,
-      purchasePrice: req.body.purchasePrice || 0,
-      standardRollLength: req.body.standardRollLength || 22.86,
-      isActive: true
+      roll_length: req.body.roll_length || 22.86,
+      is_active: true,
+      description: req.body.description || null
     });
     res.status(201).json({
       success: true,
@@ -114,7 +114,7 @@ router.delete('/:id', async (req, res) => {
         message: 'Product not found'
       });
     }
-    await product.update({ isActive: false });
+    await product.update({ is_active: false });
     res.json({
       success: true,
       message: 'Product deleted successfully'
