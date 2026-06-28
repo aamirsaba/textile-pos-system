@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Textile POS - User Management</title>
@@ -133,10 +133,10 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>👥 User Management</h1>
+            <h1>?? User Management</h1>
             <div>
-                <button class="btn btn-success" onclick="openAddModal()">➕ Add User</button>
-                <a href="/admin-dashboard.html" class="btn btn-primary">← Back</a>
+                <button class="btn btn-success" onclick="openAddModal()">? Add User</button>
+                <a href="/admin-dashboard.html" class="btn btn-primary">? Back</a>
                 <button class="btn btn-danger" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -201,7 +201,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:5000/api/v1';
+        const API_URL = 'https://aliceblue-herring-771053.hostingersite.com/api/v1';
         
         function getToken() {
             return localStorage.getItem('token');
@@ -238,14 +238,14 @@
                             <td><span class="badge badge-${user.role}">${user.role}</span></td>
                             <td><span class="badge ${user.is_active ? 'badge-active' : 'badge-inactive'}">${user.is_active ? 'Active' : 'Inactive'}</span></td>
                             <td>
-                                <button class="btn btn-warning" style="padding:5px 10px;font-size:0.8rem;" onclick="editUser('${user.id}')">✏️ Edit</button>
-                                <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8rem;" onclick="deleteUser('${user.id}')">🗑️ Delete</button>
+                                <button class="btn btn-warning" style="padding:5px 10px;font-size:0.8rem;" onclick="editUser('${user.id}')">?? Edit</button>
+                                <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8rem;" onclick="deleteUser('${user.id}')">??? Delete</button>
                             </td>
                         </tr>
                     `).join('');
                 }
             } catch (error) {
-                document.getElementById('loading').innerHTML = '❌ Error loading users';
+                document.getElementById('loading').innerHTML = '? Error loading users';
             }
         }
         
@@ -321,11 +321,11 @@
                     });
                     const data = await response.json();
                     if (data.success) {
-                        alert('✅ User updated successfully!');
+                        alert('? User updated successfully!');
                         closeModal();
                         loadUsers();
                     } else {
-                        alert('❌ Error: ' + data.message);
+                        alert('? Error: ' + data.message);
                     }
                 } else {
                     // Create user
@@ -339,15 +339,15 @@
                     });
                     const data = await response.json();
                     if (data.success) {
-                        alert('✅ User created successfully!');
+                        alert('? User created successfully!');
                         closeModal();
                         loadUsers();
                     } else {
-                        alert('❌ Error: ' + data.message);
+                        alert('? Error: ' + data.message);
                     }
                 }
             } catch (error) {
-                alert('❌ Error: ' + error.message);
+                alert('? Error: ' + error.message);
             }
             
             saveBtn.disabled = false;
@@ -365,13 +365,13 @@
                 });
                 const data = await response.json();
                 if (data.success) {
-                    alert('✅ User deleted successfully!');
+                    alert('? User deleted successfully!');
                     loadUsers();
                 } else {
-                    alert('❌ Error: ' + data.message);
+                    alert('? Error: ' + data.message);
                 }
             } catch (error) {
-                alert('❌ Error: ' + error.message);
+                alert('? Error: ' + error.message);
             }
         }
         
@@ -387,3 +387,4 @@
     </script>
 </body>
 </html>
+

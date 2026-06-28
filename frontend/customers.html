@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Textile POS - Customer Management</title>
@@ -197,10 +197,10 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>👥 Customer Management</h1>
+            <h1>?? Customer Management</h1>
             <div>
-                <button class="btn btn-success" onclick="openAddModal()">➕ Add Customer</button>
-                <a href="/admin-dashboard.html" class="btn btn-primary">← Back</a>
+                <button class="btn btn-success" onclick="openAddModal()">? Add Customer</button>
+                <a href="/admin-dashboard.html" class="btn btn-primary">? Back</a>
                 <button class="btn btn-danger" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -212,7 +212,7 @@
         </div>
         
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="🔍 Search customers by name, phone, or email..." onkeyup="searchCustomers()">
+            <input type="text" id="search-input" placeholder="?? Search customers by name, phone, or email..." onkeyup="searchCustomers()">
         </div>
         
         <div class="table-container">
@@ -272,7 +272,7 @@
     <!-- View Customer Modal -->
     <div class="modal-overlay" id="view-modal">
         <div class="modal">
-            <h2>👤 Customer Details</h2>
+            <h2>?? Customer Details</h2>
             <div id="view-content"></div>
             <div class="modal-actions">
                 <button class="btn btn-primary" onclick="closeViewModal()">Close</button>
@@ -281,7 +281,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:5000/api/v1';
+        const API_URL = 'https://aliceblue-herring-771053.hostingersite.com/api/v1';
         let customers = [];
         
         function getToken() {
@@ -353,7 +353,7 @@
                     updateStats();
                 }
             } catch (error) {
-                document.getElementById('loading').innerHTML = '❌ Error loading customers';
+                document.getElementById('loading').innerHTML = '? Error loading customers';
                 console.error('Error:', error);
             }
         }
@@ -368,7 +368,7 @@
             
             tbody.innerHTML = customersList.map(c => {
                 const balanceClass = c.balance > 0 ? 'badge-danger' : (c.balance < 0 ? 'badge-good' : 'badge-info');
-                const balanceText = c.balance > 0 ? `₦${c.balance.toFixed(2)}` : (c.balance < 0 ? `(₦${Math.abs(c.balance).toFixed(2)})` : '₦0.00');
+                const balanceText = c.balance > 0 ? `?${c.balance.toFixed(2)}` : (c.balance < 0 ? `(?${Math.abs(c.balance).toFixed(2)})` : '?0.00');
                 
                 return `
                     <tr>
@@ -378,9 +378,9 @@
                         <td><span class="badge ${balanceClass}">${balanceText}</span></td>
                         <td><span class="badge ${c.transactionCount > 0 ? 'badge-good' : 'badge-info'}">${c.transactionCount > 0 ? 'Active' : 'New'}</span></td>
                         <td>
-                            <button class="btn btn-info" style="padding:5px 10px;font-size:0.8rem;" onclick="viewCustomer('${c.id}')">👁️ View</button>
-                            <button class="btn btn-warning" style="padding:5px 10px;font-size:0.8rem;" onclick="editCustomer('${c.id}')">✏️ Edit</button>
-                            <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8rem;" onclick="deleteCustomer('${c.id}')">🗑️ Delete</button>
+                            <button class="btn btn-info" style="padding:5px 10px;font-size:0.8rem;" onclick="viewCustomer('${c.id}')">??? View</button>
+                            <button class="btn btn-warning" style="padding:5px 10px;font-size:0.8rem;" onclick="editCustomer('${c.id}')">?? Edit</button>
+                            <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8rem;" onclick="deleteCustomer('${c.id}')">??? Delete</button>
                         </td>
                     </tr>
                 `;
@@ -390,7 +390,7 @@
         function updateStats() {
             document.getElementById('total-customers').textContent = customers.length;
             const totalOutstanding = customers.reduce((sum, c) => sum + c.balance, 0);
-            document.getElementById('total-outstanding').textContent = `₦${totalOutstanding.toFixed(2)}`;
+            document.getElementById('total-outstanding').textContent = `?${totalOutstanding.toFixed(2)}`;
             const withBalance = customers.filter(c => c.balance > 0).length;
             document.getElementById('customers-with-balance').textContent = withBalance;
         }
@@ -435,8 +435,8 @@
                         <div class="row"><span class="label">Phone</span><span class="value">${customer.phone || '-'}</span></div>
                         <div class="row"><span class="label">Email</span><span class="value">${customer.email || '-'}</span></div>
                         <div class="row"><span class="label">Address</span><span class="value">${customer.address || '-'}</span></div>
-                        <div class="row"><span class="label">Balance</span><span class="value ${customer.balance > 0 ? 'negative' : 'positive'}">₦${customer.balance.toFixed(2)}</span></div>
-                        <div class="row"><span class="label">Total Spent</span><span class="value">₦${customer.totalSpent.toFixed(2)}</span></div>
+                        <div class="row"><span class="label">Balance</span><span class="value ${customer.balance > 0 ? 'negative' : 'positive'}">?${customer.balance.toFixed(2)}</span></div>
+                        <div class="row"><span class="label">Total Spent</span><span class="value">?${customer.totalSpent.toFixed(2)}</span></div>
                         <div class="row"><span class="label">Transactions</span><span class="value">${customer.transactionCount}</span></div>
                         <div class="row"><span class="label">Last Purchase</span><span class="value">${customer.lastPurchase ? new Date(customer.lastPurchase).toLocaleDateString() : '-'}</span></div>
                     </div>
@@ -499,7 +499,7 @@
             
             localStorage.setItem('customers', JSON.stringify(savedCustomers));
             
-            alert('✅ Customer saved successfully!');
+            alert('? Customer saved successfully!');
             closeModal();
             loadCustomers();
             
@@ -514,7 +514,7 @@
             savedCustomers = savedCustomers.filter(c => c.id !== customerId);
             localStorage.setItem('customers', JSON.stringify(savedCustomers));
             
-            alert('✅ Customer deleted successfully!');
+            alert('? Customer deleted successfully!');
             loadCustomers();
         }
         
@@ -535,3 +535,4 @@
     </script>
 </body>
 </html>
+

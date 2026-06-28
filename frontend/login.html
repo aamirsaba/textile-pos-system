@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Textile POS - Login</title>
@@ -97,7 +97,7 @@
 </head>
 <body>
     <div class="login-container">
-        <h1>🏪 Textile POS</h1>
+        <h1>?? Textile POS</h1>
         <p class="subtitle">Sign in to continue</p>
         
         <div class="error-message" id="error-message">Invalid username or password</div>
@@ -122,7 +122,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:5000/api/v1';
+        const API_URL = 'https://aliceblue-herring-771053.hostingersite.com/api/v1';
         
         async function handleLogin(event) {
             event.preventDefault();
@@ -134,7 +134,7 @@
             
             errorEl.classList.remove('show');
             loginBtn.disabled = true;
-            loginBtn.textContent = '⏳ Signing in...';
+            loginBtn.textContent = '? Signing in...';
             
             try {
                 const response = await fetch(`${API_URL}/auth/login`, {
@@ -170,3 +170,4 @@
     </script>
 </body>
 </html>
+

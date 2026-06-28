@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Textile POS - Supplier Management</title>
@@ -157,10 +157,10 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏢 Supplier Management</h1>
+            <h1>?? Supplier Management</h1>
             <div>
-                <button class="btn btn-success" onclick="openAddModal()">➕ Add Supplier</button>
-                <a href="/admin-dashboard.html" class="btn btn-primary">← Back</a>
+                <button class="btn btn-success" onclick="openAddModal()">? Add Supplier</button>
+                <a href="/admin-dashboard.html" class="btn btn-primary">? Back</a>
                 <button class="btn btn-danger" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -172,7 +172,7 @@
         </div>
         
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="🔍 Search suppliers..." onkeyup="searchSuppliers()">
+            <input type="text" id="search-input" placeholder="?? Search suppliers..." onkeyup="searchSuppliers()">
         </div>
         
         <div class="table-container">
@@ -235,7 +235,7 @@
     <!-- Payment Modal -->
     <div class="modal-overlay" id="payment-modal">
         <div class="modal">
-            <h2>💳 Make Payment</h2>
+            <h2>?? Make Payment</h2>
             <form id="payment-form" onsubmit="makePayment(event)">
                 <input type="hidden" id="payment-supplier-id">
                 <div class="form-group">
@@ -272,7 +272,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:5000/api/v1';
+        const API_URL = 'https://aliceblue-herring-771053.hostingersite.com/api/v1';
         let suppliers = [];
         let allSuppliers = [];
         
@@ -326,9 +326,9 @@
                     // Update stats
                     document.getElementById('total-suppliers').textContent = suppliers.length;
                     const totalBalance = suppliers.reduce((sum, s) => sum + parseFloat(s.current_balance || 0), 0);
-                    document.getElementById('total-balance').textContent = `₦${totalBalance.toFixed(2)}`;
+                    document.getElementById('total-balance').textContent = `?${totalBalance.toFixed(2)}`;
                     const totalPurchases = suppliers.reduce((sum, s) => sum + parseFloat(s.total_purchases || 0), 0);
-                    document.getElementById('total-purchases').textContent = `₦${totalPurchases.toFixed(2)}`;
+                    document.getElementById('total-purchases').textContent = `?${totalPurchases.toFixed(2)}`;
                     
                     // Render table
                     renderSuppliers(suppliers);
@@ -336,11 +336,11 @@
                     loadingEl.style.display = 'none';
                     tableEl.style.display = 'block';
                 } else {
-                    loadingEl.textContent = '❌ Error: ' + (data.message || 'Failed to load suppliers');
+                    loadingEl.textContent = '? Error: ' + (data.message || 'Failed to load suppliers');
                     loadingEl.style.color = '#dc2626';
                 }
             } catch (error) {
-                loadingEl.textContent = '❌ Error loading suppliers: ' + error.message;
+                loadingEl.textContent = '? Error loading suppliers: ' + error.message;
                 loadingEl.style.color = '#dc2626';
                 console.error('Error:', error);
             }
@@ -357,7 +357,7 @@
             listEl.innerHTML = suppliersList.map(s => {
                 const balance = parseFloat(s.current_balance || 0);
                 const balanceClass = balance > 0 ? 'badge-warning' : (balance < 0 ? 'badge-good' : 'badge-info');
-                const balanceText = balance > 0 ? `₦${balance.toFixed(2)}` : (balance < 0 ? `(₦${Math.abs(balance).toFixed(2)})` : '₦0.00');
+                const balanceText = balance > 0 ? `?${balance.toFixed(2)}` : (balance < 0 ? `(?${Math.abs(balance).toFixed(2)})` : '?0.00');
                 
                 return `
                     <tr>
@@ -366,9 +366,9 @@
                         <td>${s.phone || '-'}</td>
                         <td><span class="badge ${balanceClass}">${balanceText}</span></td>
                         <td>
-                            <button class="btn btn-success" style="padding:5px 10px;font-size:0.8rem;" onclick="openPaymentModal('${s.id}')">💳 Pay</button>
-                            <button class="btn btn-warning" style="padding:5px 10px;font-size:0.8rem;" onclick="editSupplier('${s.id}')">✏️ Edit</button>
-                            <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8rem;" onclick="deleteSupplier('${s.id}')">🗑️ Delete</button>
+                            <button class="btn btn-success" style="padding:5px 10px;font-size:0.8rem;" onclick="openPaymentModal('${s.id}')">?? Pay</button>
+                            <button class="btn btn-warning" style="padding:5px 10px;font-size:0.8rem;" onclick="editSupplier('${s.id}')">?? Edit</button>
+                            <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8rem;" onclick="deleteSupplier('${s.id}')">??? Delete</button>
                         </td>
                     </tr>
                 `;
@@ -411,7 +411,7 @@
             if (supplier) {
                 document.getElementById('payment-supplier-id').value = supplier.id;
                 document.getElementById('payment-supplier-name').value = supplier.name;
-                document.getElementById('payment-current-balance').value = `₦${parseFloat(supplier.current_balance || 0).toFixed(2)}`;
+                document.getElementById('payment-current-balance').value = `?${parseFloat(supplier.current_balance || 0).toFixed(2)}`;
                 document.getElementById('payment-amount').value = '';
                 document.getElementById('payment-method').value = 'bank_transfer';
                 document.getElementById('payment-remarks').value = '';
@@ -472,14 +472,14 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert(`✅ Supplier ${id ? 'updated' : 'created'} successfully!`);
+                    alert(`? Supplier ${id ? 'updated' : 'created'} successfully!`);
                     closeModal();
                     loadSuppliers();
                 } else {
-                    alert('❌ Error: ' + data.message);
+                    alert('? Error: ' + data.message);
                 }
             } catch (error) {
-                alert('❌ Error: ' + error.message);
+                alert('? Error: ' + error.message);
             }
             
             saveBtn.disabled = false;
@@ -511,14 +511,14 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert(`✅ Payment of ₦${amount.toFixed(2)} recorded successfully!`);
+                    alert(`? Payment of ?${amount.toFixed(2)} recorded successfully!`);
                     closePaymentModal();
                     loadSuppliers();
                 } else {
-                    alert('❌ Error: ' + data.message);
+                    alert('? Error: ' + data.message);
                 }
             } catch (error) {
-                alert('❌ Error: ' + error.message);
+                alert('? Error: ' + error.message);
             }
             
             payBtn.disabled = false;
@@ -536,13 +536,13 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert('✅ Supplier deleted successfully!');
+                    alert('? Supplier deleted successfully!');
                     loadSuppliers();
                 } else {
-                    alert('❌ Error: ' + data.message);
+                    alert('? Error: ' + data.message);
                 }
             } catch (error) {
-                alert('❌ Error: ' + error.message);
+                alert('? Error: ' + error.message);
             }
         }
         
@@ -559,3 +559,4 @@
     </script>
 </body>
 </html>
+

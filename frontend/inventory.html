@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Textile POS - Inventory</title>
@@ -175,19 +175,19 @@
     <div class="container">
         <div class="header">
             <div>
-                <h1>🏪 Textile POS - Inventory Management</h1>
+                <h1>?? Textile POS - Inventory Management</h1>
                 <p class="subtitle">Track your fabric rolls and stock levels</p>
             </div>
             <span class="badge">v1.0</span>
         </div>
         
-        <div class="status" id="status">⏳ Loading inventory...</div>
+        <div class="status" id="status">? Loading inventory...</div>
         
         <!-- Tabs -->
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('overview')">📊 Overview</button>
-            <button class="tab-btn" onclick="switchTab('add')">➕ Add Roll</button>
-            <button class="tab-btn" onclick="switchTab('low-stock')">⚠️ Low Stock</button>
+            <button class="tab-btn active" onclick="switchTab('overview')">?? Overview</button>
+            <button class="tab-btn" onclick="switchTab('add')">? Add Roll</button>
+            <button class="tab-btn" onclick="switchTab('low-stock')">?? Low Stock</button>
         </div>
         
         <!-- Tab: Overview -->
@@ -200,7 +200,7 @@
         
         <!-- Tab: Add Roll -->
         <div class="tab-content" id="tab-add">
-            <h2>📦 Add New Inventory Roll</h2>
+            <h2>?? Add New Inventory Roll</h2>
             <div class="add-roll-form">
                 <div class="form-row">
                     <select id="product-select">
@@ -210,14 +210,14 @@
                     <input type="number" id="purchase-price" placeholder="Purchase Price" step="0.01">
                     <input type="date" id="purchase-date">
                 </div>
-                <button class="btn btn-success" onclick="addRoll()" style="margin-top:10px;">➕ Add Roll</button>
+                <button class="btn btn-success" onclick="addRoll()" style="margin-top:10px;">? Add Roll</button>
             </div>
             <div id="add-result" style="margin-top:15px;"></div>
         </div>
         
         <!-- Tab: Low Stock -->
         <div class="tab-content" id="tab-low-stock">
-            <h2>⚠️ Low Stock Alerts</h2>
+            <h2>?? Low Stock Alerts</h2>
             <div id="low-stock-list"><div class="loading">Checking stock levels...</div></div>
         </div>
     </div>
@@ -225,7 +225,7 @@
     <script>
         let products = [];
         let inventory = [];
-        const API_URL = 'http://localhost:5000/api/v1';
+        const API_URL = 'https://aliceblue-herring-771053.hostingersite.com/api/v1';
         
         function switchTab(tab) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -246,7 +246,7 @@
                     const select = document.getElementById('product-select');
                     select.innerHTML = '<option value="">Select Product...</option>';
                     products.forEach(p => {
-                        select.innerHTML += `<option value="${p.id}">${p.name} (₦${p.sellingPrice}/m)</option>`;
+                        select.innerHTML += `<option value="${p.id}">${p.name} (?${p.sellingPrice}/m)</option>`;
                     });
                 }
             } catch (error) {
@@ -262,7 +262,7 @@
                 if (data.success) {
                     inventory = data.data;
                     const statusEl = document.getElementById('status');
-                    statusEl.innerHTML = '✅ Inventory loaded! ' + data.count + ' products in stock';
+                    statusEl.innerHTML = '? Inventory loaded! ' + data.count + ' products in stock';
                     statusEl.className = 'status';
                     
                     renderStats(inventory);
@@ -270,7 +270,7 @@
                 }
             } catch (error) {
                 const statusEl = document.getElementById('status');
-                statusEl.innerHTML = '❌ Error loading inventory. Make sure the server is running.';
+                statusEl.innerHTML = '? Error loading inventory. Make sure the server is running.';
                 statusEl.className = 'status error';
             }
         }
@@ -317,7 +317,7 @@
                 return `
                     <div class="inventory-card ${isLowStock ? 'low-stock' : ''}">
                         <div class="product-name">${item.product_name}</div>
-                        <div class="product-category">${item.category || 'General'} | ₦${item.sellingPrice}/m</div>
+                        <div class="product-category">${item.category || 'General'} | ?${item.sellingPrice}/m</div>
                         <div class="stock-info">
                             <div class="stock-row">
                                 <span class="label">Total Meters</span>
@@ -335,7 +335,7 @@
                                 <span class="label">Total Rolls</span>
                                 <span class="value">${parseInt(item.total_rolls || 0)}</span>
                             </div>
-                            ${isLowStock ? '<div style="margin-top:10px;color:#dc2626;font-weight:bold;">⚠️ LOW STOCK</div>' : ''}
+                            ${isLowStock ? '<div style="margin-top:10px;color:#dc2626;font-weight:bold;">?? LOW STOCK</div>' : ''}
                         </div>
                     </div>
                 `;
@@ -352,7 +352,7 @@
                 if (data.success) {
                     const list = document.getElementById('low-stock-list');
                     if (data.count === 0) {
-                        list.innerHTML = '<p style="padding:20px;color:#16a34a;">✅ All products have sufficient stock!</p>';
+                        list.innerHTML = '<p style="padding:20px;color:#16a34a;">? All products have sufficient stock!</p>';
                     } else {
                         let html = '<div style="display:grid;grid-template-columns:1fr;gap:10px;">';
                         data.data.forEach(item => {
@@ -405,15 +405,15 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    resultDiv.innerHTML = `<div style="color:#16a34a;">✅ ${data.message}: ${data.data.rollNumber}</div>`;
+                    resultDiv.innerHTML = `<div style="color:#16a34a;">? ${data.message}: ${data.data.rollNumber}</div>`;
                     document.getElementById('roll-length').value = '';
                     document.getElementById('purchase-price').value = '';
                     loadInventory();
                 } else {
-                    resultDiv.innerHTML = `<div style="color:#dc2626;">❌ ${data.message}</div>`;
+                    resultDiv.innerHTML = `<div style="color:#dc2626;">? ${data.message}</div>`;
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<div style="color:#dc2626;">❌ Error: ${error.message}</div>`;
+                resultDiv.innerHTML = `<div style="color:#dc2626;">? Error: ${error.message}</div>`;
             }
         }
         
@@ -424,3 +424,4 @@
     </script>
 </body>
 </html>
+

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Textile POS - Reports</title>
@@ -120,39 +120,39 @@
 </head>
 <body>
     <div class="container">
-        <h1>📊 Advanced Reports</h1>
+        <h1>?? Advanced Reports</h1>
         <p class="subtitle">Comprehensive business analytics and insights</p>
         
-        <div class="status" id="status">✅ System ready</div>
+        <div class="status" id="status">? System ready</div>
         
         <div class="report-grid">
             <div class="report-card" onclick="loadReport('daily-sales')">
-                <div class="icon">📅</div>
+                <div class="icon">??</div>
                 <div class="title">Daily Sales Report</div>
                 <div class="desc">View sales for any specific day</div>
             </div>
             <div class="report-card" onclick="loadReport('monthly-sales')">
-                <div class="icon">📊</div>
+                <div class="icon">??</div>
                 <div class="title">Monthly Sales Report</div>
                 <div class="desc">Monthly sales breakdown</div>
             </div>
             <div class="report-card" onclick="loadReport('best-selling')">
-                <div class="icon">🏆</div>
+                <div class="icon">??</div>
                 <div class="title">Best Selling Products</div>
                 <div class="desc">Top performing products</div>
             </div>
             <div class="report-card" onclick="loadReport('customer-outstanding')">
-                <div class="icon">💰</div>
+                <div class="icon">??</div>
                 <div class="title">Customer Outstanding</div>
                 <div class="desc">Customers with credit balances</div>
             </div>
             <div class="report-card" onclick="loadReport('cash-collection')">
-                <div class="icon">💵</div>
+                <div class="icon">??</div>
                 <div class="title">Cash Collection</div>
                 <div class="desc">Cash sales collection report</div>
             </div>
             <div class="report-card" onclick="loadReport('stock-movement')">
-                <div class="icon">📦</div>
+                <div class="icon">??</div>
                 <div class="title">Stock Movement</div>
                 <div class="desc">Inventory stock tracking</div>
             </div>
@@ -164,7 +164,7 @@
     </div>
 
     <script>
-        const API_URL = "http://localhost:5000/api/v1";
+        const API_URL = "https://aliceblue-herring-771053.hostingersite.com/api/v1";
         
         async function loadReport(type) {
             const container = document.getElementById('report-container');
@@ -218,7 +218,7 @@
         }
         
         function renderDailySales(data) {
-            let html = '<h2>📅 Daily Sales Report</h2>';
+            let html = '<h2>?? Daily Sales Report</h2>';
             
             if (data.summary) {
                 html += `
@@ -228,11 +228,11 @@
                             <div class="label">Transactions</div>
                         </div>
                         <div class="summary-item">
-                            <div class="value">₦${data.summary.total_amount.toLocaleString()}</div>
+                            <div class="value">?${data.summary.total_amount.toLocaleString()}</div>
                             <div class="label">Total Sales</div>
                         </div>
                         <div class="summary-item">
-                            <div class="value">₦${data.summary.average_sale.toLocaleString()}</div>
+                            <div class="value">?${data.summary.average_sale.toLocaleString()}</div>
                             <div class="label">Average Sale</div>
                         </div>
                     </div>
@@ -256,7 +256,7 @@
                                 <tr>
                                     <td>${row.invoice}</td>
                                     <td>${row.customer}</td>
-                                    <td>₦${parseFloat(row.amount).toLocaleString()}</td>
+                                    <td>?${parseFloat(row.amount).toLocaleString()}</td>
                                     <td>${row.payment}</td>
                                     <td>${new Date(row.date).toLocaleString()}</td>
                                 </tr>
@@ -268,12 +268,12 @@
                 html += '<p style="padding:20px;color:#999;">No sales found for this day</p>';
             }
             
-            html += `<button class="btn btn-excel" onclick="exportExcel('daily-sales')">📊 Export to Excel</button>`;
+            html += `<button class="btn btn-excel" onclick="exportExcel('daily-sales')">?? Export to Excel</button>`;
             return html;
         }
         
         function renderMonthlySales(data) {
-            let html = '<h2>📊 Monthly Sales Report</h2>';
+            let html = '<h2>?? Monthly Sales Report</h2>';
             
             if (data.summary) {
                 html += `
@@ -283,15 +283,15 @@
                             <div class="label">Transactions</div>
                         </div>
                         <div class="summary-item">
-                            <div class="value">₦${data.summary.total_sales.toLocaleString()}</div>
+                            <div class="value">?${data.summary.total_sales.toLocaleString()}</div>
                             <div class="label">Total Sales</div>
                         </div>
                         <div class="summary-item">
-                            <div class="value">₦${data.summary.cash_sales.toLocaleString()}</div>
+                            <div class="value">?${data.summary.cash_sales.toLocaleString()}</div>
                             <div class="label">Cash Sales</div>
                         </div>
                         <div class="summary-item">
-                            <div class="value">₦${data.summary.credit_sales.toLocaleString()}</div>
+                            <div class="value">?${data.summary.credit_sales.toLocaleString()}</div>
                             <div class="label">Credit Sales</div>
                         </div>
                     </div>
@@ -315,9 +315,9 @@
                                 <tr>
                                     <td>${new Date(row.date).toLocaleDateString()}</td>
                                     <td>${row.transactions}</td>
-                                    <td>₦${parseFloat(row.total).toLocaleString()}</td>
-                                    <td>₦${parseFloat(row.cash_sales).toLocaleString()}</td>
-                                    <td>₦${parseFloat(row.credit_sales).toLocaleString()}</td>
+                                    <td>?${parseFloat(row.total).toLocaleString()}</td>
+                                    <td>?${parseFloat(row.cash_sales).toLocaleString()}</td>
+                                    <td>?${parseFloat(row.credit_sales).toLocaleString()}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -327,12 +327,12 @@
                 html += '<p style="padding:20px;color:#999;">No sales found for this month</p>';
             }
             
-            html += `<button class="btn btn-excel" onclick="exportExcel('monthly-sales')">📊 Export to Excel</button>`;
+            html += `<button class="btn btn-excel" onclick="exportExcel('monthly-sales')">?? Export to Excel</button>`;
             return html;
         }
         
         function renderBestSelling(data) {
-            let html = '<h2>🏆 Best Selling Products</h2>';
+            let html = '<h2>?? Best Selling Products</h2>';
             
             if (data.summary) {
                 html += `
@@ -369,8 +369,8 @@
                                     <td>${row.unit}</td>
                                     <td>${row.times_sold}</td>
                                     <td>${parseFloat(row.total_meters).toFixed(2)}</td>
-                                    <td>₦${parseFloat(row.total_revenue).toLocaleString()}</td>
-                                    <td>₦${parseFloat(row.average_price).toLocaleString()}</td>
+                                    <td>?${parseFloat(row.total_revenue).toLocaleString()}</td>
+                                    <td>?${parseFloat(row.average_price).toLocaleString()}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -384,7 +384,7 @@
         }
         
         function renderCustomerOutstanding(data) {
-            let html = '<h2>💰 Customer Outstanding Report</h2>';
+            let html = '<h2>?? Customer Outstanding Report</h2>';
             
             if (data.summary) {
                 html += `
@@ -394,7 +394,7 @@
                             <div class="label">Customers with Balance</div>
                         </div>
                         <div class="summary-item">
-                            <div class="value">₦${data.summary.total_outstanding.toLocaleString()}</div>
+                            <div class="value">?${data.summary.total_outstanding.toLocaleString()}</div>
                             <div class="label">Total Outstanding</div>
                         </div>
                     </div>
@@ -417,8 +417,8 @@
                                 <tr>
                                     <td><strong>${row.customer}</strong></td>
                                     <td>${row.transactions}</td>
-                                    <td>₦${parseFloat(row.total_spent).toLocaleString()}</td>
-                                    <td style="color:#dc2626;font-weight:bold;">₦${parseFloat(row.outstanding).toLocaleString()}</td>
+                                    <td>?${parseFloat(row.total_spent).toLocaleString()}</td>
+                                    <td style="color:#dc2626;font-weight:bold;">?${parseFloat(row.outstanding).toLocaleString()}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -432,7 +432,7 @@
         }
         
         function renderCashCollection(data) {
-            let html = '<h2>💵 Cash Collection Report</h2>';
+            let html = '<h2>?? Cash Collection Report</h2>';
             
             if (data.summary) {
                 html += `
@@ -446,7 +446,7 @@
                             <div class="label">Cash Transactions</div>
                         </div>
                         <div class="summary-item">
-                            <div class="value">₦${data.summary.total_collected.toLocaleString()}</div>
+                            <div class="value">?${data.summary.total_collected.toLocaleString()}</div>
                             <div class="label">Total Collected</div>
                         </div>
                     </div>
@@ -468,7 +468,7 @@
                                 <tr>
                                     <td>${new Date(row.date).toLocaleDateString()}</td>
                                     <td>${row.transactions}</td>
-                                    <td>₦${parseFloat(row.total_collected).toLocaleString()}</td>
+                                    <td>?${parseFloat(row.total_collected).toLocaleString()}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -482,7 +482,7 @@
         }
         
         function renderStockMovement(data) {
-            let html = '<h2>📦 Stock Movement Report</h2>';
+            let html = '<h2>?? Stock Movement Report</h2>';
             
             if (data.summary) {
                 html += `
@@ -527,7 +527,7 @@
                                     <td>${row.roll_number}</td>
                                     <td>${parseFloat(row.total_length).toFixed(2)}</td>
                                     <td>${parseFloat(row.remaining_length).toFixed(2)}</td>
-                                    <td>${row.is_full_roll ? '✅ Full Roll' : '⚠️ Partial'}</td>
+                                    <td>${row.is_full_roll ? '? Full Roll' : '?? Partial'}</td>
                                     <td>${new Date(row.added_date).toLocaleDateString()}</td>
                                 </tr>
                             `).join('')}
@@ -559,4 +559,5 @@
     </script>
 </body>
 </html>
+
 
