@@ -843,3 +843,37 @@ startServer();
 
 
 
+/ /   D E B U G   -   C h e c k   p r o d u c t s   t a b l e 
+ a p p . g e t ( ' / a p i / v 1 / d e b u g - p r o d u c t s ' ,   a s y n c   ( r e q ,   r e s )   = >   { 
+     t r y   { 
+         / /   C h e c k   i f   t a b l e   e x i s t s 
+         c o n s t   t a b l e C h e c k   =   a w a i t   s e q u e l i z e . q u e r y ( 
+             " S E L E C T   E X I S T S   ( S E L E C T   1   F R O M   i n f o r m a t i o n _ s c h e m a . t a b l e s   W H E R E   t a b l e _ n a m e   =   ' p r o d u c t s ' ) " 
+         ) ; 
+         c o n s t   t a b l e E x i s t s   =   t a b l e C h e c k [ 0 ] [ 0 ] . e x i s t s ; 
+         
+         i f   ( ! t a b l e E x i s t s )   { 
+             r e t u r n   r e s . j s o n ( {   s u c c e s s :   f a l s e ,   m e s s a g e :   ' P r o d u c t s   t a b l e   d o e s   n o t   e x i s t '   } ) ; 
+         } 
+         
+         / /   G e t   c o l u m n   i n f o 
+         c o n s t   c o l u m n s   =   a w a i t   s e q u e l i z e . q u e r y ( 
+             " S E L E C T   c o l u m n _ n a m e ,   d a t a _ t y p e   F R O M   i n f o r m a t i o n _ s c h e m a . c o l u m n s   W H E R E   t a b l e _ n a m e   =   ' p r o d u c t s '   O R D E R   B Y   o r d i n a l _ p o s i t i o n " 
+         ) ; 
+         
+         / /   G e t   s a m p l e   d a t a 
+         c o n s t   d a t a   =   a w a i t   s e q u e l i z e . q u e r y ( ' S E L E C T   *   F R O M   p r o d u c t s   L I M I T   5 ' ) ; 
+         
+         r e s . j s o n ( { 
+             s u c c e s s :   t r u e , 
+             t a b l e _ e x i s t s :   t a b l e E x i s t s , 
+             c o l u m n s :   c o l u m n s [ 0 ] , 
+             s a m p l e _ d a t a :   d a t a [ 0 ] , 
+             c o u n t :   d a t a [ 0 ] . l e n g t h 
+         } ) ; 
+     }   c a t c h   ( e r r o r )   { 
+         c o n s o l e . e r r o r ( ' D e b u g   e r r o r : ' ,   e r r o r ) ; 
+         r e s . s t a t u s ( 5 0 0 ) . j s o n ( {   s u c c e s s :   f a l s e ,   e r r o r :   e r r o r . m e s s a g e ,   s t a c k :   e r r o r . s t a c k   } ) ; 
+     } 
+ } ) ;  
+ 
