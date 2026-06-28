@@ -49,11 +49,12 @@ app.use(express.urlencoded({ extended: true }));
 const Product = sequelize.define('Product', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   name: { type: DataTypes.STRING(255), allowNull: false },
+  code: { type: DataTypes.STRING(50), allowNull: true },
   category: { type: DataTypes.STRING(100), allowNull: true },
-  sellingPrice: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
-  purchasePrice: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
-  standardRollLength: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 22.86 },
-  isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
+  price: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
+  cost: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
+  roll_length: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 22.86 },
+  is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
 }, { tableName: 'products', timestamps: true });
 
 const Sale = sequelize.define('Sale', {
@@ -186,7 +187,7 @@ app.get('/api/v1/auth/users', async (req, res) => {
 app.get('/api/v1/products', async (req, res) => {
   try {
     const products = await Product.findAll({
-      where: { isActive: true },
+      where: { is_active: true },
       order: [['name', 'ASC']]
     });
     res.json({ success: true, data: products, count: products.length });
@@ -201,9 +202,9 @@ app.post('/api/v1/products', async (req, res) => {
       id: uuidv4(),
       name: req.body.name,
       category: req.body.category || null,
-      sellingPrice: req.body.sellingPrice || 0,
-      purchasePrice: req.body.purchasePrice || 0,
-      standardRollLength: req.body.standardRollLength || 22.86,
+      price: req.body.price || 0,
+cost: req.body.cost || 0,
+roll_length: req.body.roll_length || 22.86,
       isActive: true
     });
     res.status(201).json({ success: true, data: product, message: 'Product created successfully' });
@@ -219,15 +220,15 @@ app.get('/api/v1/inventory', async (req, res) => {
   try {
     const query = `
       SELECT 
-        p.id as product_id, p.name as product_name, p.category, p."sellingPrice",
+        p.id as product_id, p.name as product_name, p.category, p.price,
         COUNT(r.id) as total_rolls,
         SUM(CASE WHEN r.is_full_roll = true AND r.remaining_length > 0 AND r.is_active = true THEN 1 ELSE 0 END) as full_rolls,
         SUM(CASE WHEN r.is_full_roll = false AND r.remaining_length > 0 AND r.is_active = true THEN 1 ELSE 0 END) as partial_rolls,
         SUM(CASE WHEN r.is_active = true THEN r.remaining_length ELSE 0 END) as total_meters
       FROM products p
       LEFT JOIN inventory_rolls r ON p.id = r.product_id
-      WHERE p."isActive" = true
-      GROUP BY p.id, p.name, p.category, p."sellingPrice"
+      WHERE p.is_active = true
+      GROUP BY p.id, p.name, p.category, p.price
       ORDER BY p.name
     `;
     const [results] = await sequelize.query(query);
