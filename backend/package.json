@@ -1,46 +1,46 @@
-﻿{
-  "name": "textile-pos-backend",
-  "version": "1.0.0",
-  "description": "Textile POS & Inventory Management System - Backend API",
-  "main": "src/server.js",
-  "scripts": {
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js",
-    "build": "mkdir -p dist && cp -r src/* dist/",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "compression": "^1.7.4",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "exceljs": "^4.4.0",
-    "express": "^4.18.2",
-    "helmet": "^7.0.0",
-    "json2csv": "^6.0.0-alpha.2",
-    "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.7",
-    "pdfkit": "^0.14.0",
-    "pg": "^8.11.3",
-    "sequelize": "^6.33.0",
-    "uuid": "^9.0.1",
-    "winston": "^3.11.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1",
-    "typescript": "^5.2.2"
-  },
-  "keywords": [
-    "textile",
-    "pos",
-    "inventory",
-    "management",
-    "retail",
-    "wholesale"
-  ],
-  "author": "Aamir Saba",
-  "license": "MIT",
-  "engines": {
-    "node": ">=18.0.0"
-  }
+{
+    "name":  "textile-pos-backend",
+    "version":  "1.0.0",
+    "description":  "Textile POS \u0026 Inventory Management System - Backend API",
+    "main":  "src/server.js",
+    "scripts":  {
+                    "dev":  "nodemon src/server.js",
+                    "start":  "node src/server.js",
+                    "build":  "mkdir -p dist \u0026\u0026 cp -r src/* dist/",
+                    "test":  "echo \"Error: no test specified\" \u0026\u0026 exit 1"
+                },
+    "dependencies":  {
+                         "bcryptjs":  "^2.4.3",
+                         "compression":  "^1.7.4",
+                         "cors":  "^2.8.5",
+                         "dotenv":  "^16.3.1",
+                         "exceljs":  "^4.4.0",
+                         "express":  "^4.18.2",
+                         "helmet":  "^7.0.0",
+                         "json2csv":  "^6.0.0-alpha.2",
+                         "jsonwebtoken":  "^9.0.2",
+                         "nodemailer":  "^6.9.7",
+                         "pdfkit":  "^0.14.0",
+                         "pg":  "^8.11.3",
+                         "sequelize":  "^6.33.0",
+                         "uuid":  "^9.0.1",
+                         "winston":  "^3.11.0"
+                     },
+    "devDependencies":  {
+                            "nodemon":  "^3.0.1",
+                            "typescript":  "^5.2.2"
+                        },
+    "keywords":  [
+                     "textile",
+                     "pos",
+                     "inventory",
+                     "management",
+                     "retail",
+                     "wholesale"
+                 ],
+    "author":  "Aamir Saba",
+    "license":  "MIT",
+    "engines":  {
+                    "node":  "\u003e=18.0.0"
+                }
 }
