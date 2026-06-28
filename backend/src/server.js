@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
@@ -205,7 +205,7 @@ app.post('/api/v1/products', async (req, res) => {
       price: req.body.price || 0,
 cost: req.body.cost || 0,
 roll_length: req.body.roll_length || 22.86,
-      isActive: true
+      is_active: true
     });
     res.status(201).json({ success: true, data: product, message: 'Product created successfully' });
   } catch (error) {
@@ -240,8 +240,8 @@ app.get('/api/v1/inventory', async (req, res) => {
 
 app.post('/api/v1/inventory', async (req, res) => {
   try {
-    const { productId, totalLength, purchasePrice, purchaseDate } = req.body;
-    const productQuery = 'SELECT name, "purchasePrice" FROM products WHERE id = $1 AND "isActive" = true';
+    const { productId, totalLength, cost, purchaseDate } = req.body;
+    const productQuery = 'SELECT name, "cost" FROM products WHERE id = $1 AND "is_active" = true';
     const [productResult] = await sequelize.query(productQuery, { bind: [productId] });
     
     if (!productResult || productResult.length === 0) {
@@ -264,7 +264,7 @@ app.post('/api/v1/inventory', async (req, res) => {
       ) RETURNING *
     `;
     const [result] = await sequelize.query(insertQuery, {
-      bind: [productId, rollNumber, totalLength, totalLength, true, purchasePrice || product.purchasePrice || 0, purchaseDate || new Date()]
+      bind: [productId, rollNumber, totalLength, totalLength, true, cost || product.cost || 0, purchaseDate || new Date()]
     });
     res.status(201).json({ success: true, data: result[0], message: 'Inventory roll added successfully' });
   } catch (error) {
@@ -822,18 +822,18 @@ app.get('/', (req, res) => {
 const startServer = async () => {
   try {
     await sequelize.authenticate();
-    console.log('✅ Database connected');
-    console.log('✅ Database ready');
+    console.log('? Database connected');
+    console.log('? Database ready');
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📍 Health check: http://localhost:${PORT}/api/v1/health`);
-      console.log(`📍 Products API: http://localhost:${PORT}/api/v1/products`);
-      console.log(`📍 Inventory API: http://localhost:${PORT}/api/v1/inventory`);
-      console.log(`📍 Sales API: http://localhost:${PORT}/api/v1/sales`);
-      console.log(`📍 Auth Login: http://localhost:${PORT}/api/v1/auth/login`);
+      console.log(`?? Server running on port ${PORT}`);
+      console.log(`?? Health check: http://localhost:${PORT}/api/v1/health`);
+      console.log(`?? Products API: http://localhost:${PORT}/api/v1/products`);
+      console.log(`?? Inventory API: http://localhost:${PORT}/api/v1/inventory`);
+      console.log(`?? Sales API: http://localhost:${PORT}/api/v1/sales`);
+      console.log(`?? Auth Login: http://localhost:${PORT}/api/v1/auth/login`);
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    console.error('? Failed to start server:', error);
     process.exit(1);
   }
 };
@@ -875,5 +875,6 @@ startServer();
          c o n s o l e . e r r o r ( ' D e b u g   e r r o r : ' ,   e r r o r ) ; 
          r e s . s t a t u s ( 5 0 0 ) . j s o n ( {   s u c c e s s :   f a l s e ,   e r r o r :   e r r o r . m e s s a g e ,   s t a c k :   e r r o r . s t a c k   } ) ; 
      } 
- } ) ;  
+ } ) ; 
+ 
  
