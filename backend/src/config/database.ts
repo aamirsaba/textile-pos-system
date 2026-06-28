@@ -12,7 +12,9 @@ const sequelize = new Sequelize(process.env.DATABASE_URL || '', {
       require: true,
       rejectUnauthorized: false
     },
-    family: 4
+    family: 4,
+    // Explicitly set the application name
+    application_name: 'textile-pos'
   },
   logging: false,
   pool: {
